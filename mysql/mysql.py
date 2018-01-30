@@ -79,7 +79,7 @@ def get_mysql_status():
 
 def main():
     ret = get_mysql_status()
-    push_date = pub.P_data()
+    push_date = P_data()
     push_date.add(metric="Question", value=ret['Questions'],
                   tag="srv=mysql", step=STEP)
     push_date.add(metric="QPS", value=ret['Questions'], 
