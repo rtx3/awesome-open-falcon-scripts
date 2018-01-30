@@ -81,7 +81,8 @@ def push(data):
     data = json.dumps(data)
     h = httplib.HTTPConnection(PUSH_PATH)        
     h.request('POST', '/v1/push', data)        
-    r = h.getresponse()        
+    return 1
+    #r = h.getresponse()        
     #print r.read()
 
 
