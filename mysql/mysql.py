@@ -53,7 +53,7 @@ def main():
                   value=(ret['Com_commit'] + ret['Com_rollback']),
                   tag="srv=mysql", counterType="COUNTER", step=STEP)
     print push_date.out()
-    #push_date.push()
+    push_date.push()
 
 
 if __name__ == "__main__":
