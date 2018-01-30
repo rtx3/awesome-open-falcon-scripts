@@ -11,6 +11,7 @@ DB_host = "127.0.0.1"
 DB_port = 3306
 DB_user = "root"
 DB_passwd = ""
+STEP = 360
 
 if DB_passwd:
     CMD = "mysql -u%s -p%s -h%s -P%d " % (DB_user, DB_passwd, DB_host, DB_port)
@@ -41,15 +42,16 @@ def get_mysql_status():
 def main():
     ret = get_mysql_status()
     push_date = pub.P_data()
-    push_date.add(metric="Question", value=ret['Questions'], tag="srv=mysql")
+    push_date.add(metric="Question", value=ret['Questions'],
+                  tag="srv=mysql", step=STEP)
     push_date.add(metric="QPS", value=ret['Questions'], 
-                  tag="srv=mysql", counterType="COUNTER")
+                  tag="srv=mysql", counterType="COUNTER", step=STEP)
     push_date.add(metric="Transaction", 
                   value=(ret['Com_commit'] + ret['Com_rollback']), 
-                  tag="srv=mysql")
+                  tag="srv=mysql", step=STEP)
     push_date.add(metric="TPS", 
                   value=(ret['Com_commit'] + ret['Com_rollback']),
-                  tag="srv=mysql", counterType="COUNTER")
+                  tag="srv=mysql", counterType="COUNTER", step=STEP)
     print push_date.out()
     #push_date.push()
 
