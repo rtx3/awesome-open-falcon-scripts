@@ -15,7 +15,7 @@ DB_passwd = "password"
 if DB_passwd:
     CMD = "mysql -u%s -p%s -h%s -P%d " % (DB_user, DB_passwd, DB_host, DB_port)
 else:
-    CMD = "mysql -u%s -p%s -h%s " % (DB_user, DB_host, DB_port)
+    CMD = "mysql -u%s -h%s -P%d " % (DB_user, DB_host, DB_port)
 
 METRICS = ['Questions',
            'Com_commit',
@@ -26,7 +26,7 @@ METRICS = ['Questions',
 def get_mysql_status():
     ret = {}
     for item in METRICS:
-        ret[item] = ctl(CMD + ' -e ' + str(item)).readlines()
+        ret[item] = ctl(CMD + ' -e \" show  global  status like' + str(item) + '\"').readlines()
     print ret
     return ret
     #qps_cmd = "show  global  status like 'Question%';"
