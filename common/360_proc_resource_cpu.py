@@ -83,12 +83,11 @@ def push(data):
     h = httplib.HTTPConnection(PUSH_PATH)        
     h.request('POST', '/v1/push', data, headers)        
     return 0
-    #r = h.getresponse()        
-    #print r.read()
+
 
 
 def get_pid():
-    cmd = "ps aux | awk '{print $2, $4, $11}' | sort -k2rn | head -n 10"
+    cmd = "ps aux | awk '{print $2, $3, $11}' | sort -k2rn | head -n 5"
     ret = []
     for item in os.popen(cmd).readlines():
         pid = {}
@@ -109,6 +108,4 @@ if __name__ == "__main__":
             d = Resource(pid=pid, tag=item[pid]).run()
             if d:
                 push(d)
-    #d = Resource(sys.argv[1]).run()
-    #if d:
-    #    print json.dumps(d)
+
