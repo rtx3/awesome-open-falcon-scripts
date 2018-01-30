@@ -100,13 +100,13 @@ def get_pid():
     return ret
 
 if __name__ == "__main__":
-    print get_pid()
     pids = get_pid()
+    print pids
     for item in pids:
         for pid in item:            
             d = Resource(pid=pid, tag=item[pid]).run()
-        if d:
-            push(d)
+            if d:
+                push(d)
     #d = Resource(sys.argv[1]).run()
     #if d:
     #    print json.dumps(d)
