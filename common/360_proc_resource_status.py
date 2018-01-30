@@ -79,9 +79,10 @@ class Resource():
 
 def push(data):
     data = json.dumps(data)
+    headers = {"Content-type": "application/json", "Accept": "text/plain"}
     h = httplib.HTTPConnection(PUSH_PATH)        
-    h.request('POST', '/v1/push', data)        
-    return 1
+    h.request('POST', '/v1/push', data, headers)        
+    return 0
     #r = h.getresponse()        
     #print r.read()
 

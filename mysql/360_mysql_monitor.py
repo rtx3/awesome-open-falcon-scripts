@@ -51,8 +51,9 @@ class P_data(object):
 
     def push(self):
         data = json.dumps(self.result)
+        headers = {"Content-type": "application/json", "Accept": "text/plain"}
         h = httplib.HTTPConnection(PUSH_PATH)        
-        h.request('POST', '/v1/push', data)        
+        h.request('POST', '/v1/push', data, headers)        
         r = h.getresponse()        
         print r.read()
 
