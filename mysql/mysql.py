@@ -28,7 +28,7 @@ def get_mysql_status():
     for item in METRICS:
         status = ctl(CMD + ' -e \"show  global  status like \'' 
                            + str(item) + '%\'\"').readlines()
-        ret[item] = status[1].split("\t")[1].strip('\\n')
+        ret[item] = status[1].split("\t")[1].strip('\n')
 
 
         #ret[item] = ctl(CMD + ' -e \"show  global  status like \'' + str(item) + '%\'\"').readlines()
