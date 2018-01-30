@@ -26,7 +26,12 @@ METRICS = ['Questions',
 def get_mysql_status():
     ret = {}
     for item in METRICS:
-        ret[item] = ctl(CMD + ' -e \"show  global  status like \'' + str(item) + '%\'\"').readlines()
+        status = ctl(CMD + ' -e \"show  global  status like \'' 
+                           + str(item) + '%\'\"').readlines()
+        ret[item] = status[1].split("\t")[1].strip('\\n')
+
+
+        #ret[item] = ctl(CMD + ' -e \"show  global  status like \'' + str(item) + '%\'\"').readlines()
         #print CMD + ' -e \"show  global  status like \'' + str(item) + '%\'\"'
     return ret
     #qps_cmd = "show  global  status like 'Question%';"
