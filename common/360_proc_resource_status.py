@@ -63,7 +63,7 @@ class Resource():
                 t['counterType'] = self.resources_d[resource][1]
                 t['metric'] = resource
                 t['value'] = self.resources_d[resource][0]()
-                t['tags'] = "pid=%s,top=%s" % (self.pid, self.tag)
+                t['tags'] = "pid=%s,pro_cmd=%s" % (self.pid, self.tag)
 
                 output.append(t)
 
