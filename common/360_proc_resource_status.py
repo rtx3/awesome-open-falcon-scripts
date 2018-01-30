@@ -74,8 +74,17 @@ class Resource():
 
 
 def get_pid():
-        cmd="ps aux | awk '{print $2, $4, $11}' | sort -k2rn | head -n 10"
-        return os.popen(cmd).readlines()
+    cmd="ps aux | awk '{print $2, $4, $11}' | sort -k2rn | head -n 10"
+    ret = []
+    for item in os.popen(cmd).readlines():
+        try:
+            assert(isinstance(int(item.split()[0]), (int, long)))
+        except AssertionError:
+            print "ERROR: value is not int."
+            continue
+        pid = int(item.split()[0])
+        ret.append(item.split()[0])
+    return ret
 
 if __name__ == "__main__":
     print get_pid()
