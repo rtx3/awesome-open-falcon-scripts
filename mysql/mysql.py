@@ -33,18 +33,24 @@ def get_mysql_status():
             assert(isinstance(int(status), (int, long)))
             ret[item] = int(status)
         except AssertionError:
+            print "ERROR: value is not int."
             continue
     return ret
 
 
 def main():
     ret = get_mysql_status()
-    print ret
-    #push_date = pub.P_data()
-    #push_date.add(metric="Question", value=ret['Questions'], tag="srv=mysql")
-    #push_date.add(metric="QPS", value=int(ret['Questions']), tag="srv=mysql", counterType="COUNTER")
-    #push_date.add(metric="Transaction", value=int(ret['Questions']) + , tag="srv=mysql")
-    #push_date.add(metric="TPS", value=tps_counter, tag="srv=mysql", counterType="COUNTER")
+    push_date = pub.P_data()
+    push_date.add(metric="Question", value=ret['Questions'], tag="srv=mysql")
+    push_date.add(metric="QPS", value=ret['Questions'], 
+                  tag="srv=mysql", counterType="COUNTER")
+    push_date.add(metric="Transaction", 
+                  value=(ret['Com_commit'] + ret['Com_rollback']), 
+                  tag="srv=mysql")
+    push_date.add(metric="TPS", 
+                  value=(ret['Com_commit'] + ret['Com_rollback']),
+                  tag="srv=mysql", counterType="COUNTER")
+    print push_date.out()
     #push_date.push()
 
 
