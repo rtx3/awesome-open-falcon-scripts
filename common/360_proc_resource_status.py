@@ -84,7 +84,7 @@ def get_pid():
             print "ERROR: value is not int."
             continue
         pid[int(item.split()[0])] = item.split()[-1].strip("\n")
-        ret.append(pid)
+    ret.append(pid)
     return ret
 
 if __name__ == "__main__":
