@@ -10,7 +10,7 @@ import pub
 DB_host = "127.0.0.1"
 DB_port = 3306
 DB_user = "root"
-DB_passwd = "password"
+DB_passwd = ""
 
 if DB_passwd:
     CMD = "mysql -u%s -p%s -h%s -P%d " % (DB_user, DB_passwd, DB_host, DB_port)
@@ -26,8 +26,8 @@ METRICS = ['Questions',
 def get_mysql_status():
     ret = {}
     for item in METRICS:
-        ret[item] = ctl(CMD + ' -e \" show  global  status like' + str(item) + '\"').readlines()
-    print ret
+        ret[item] = ctl(CMD + ' -e \"show  global  status like \'' + str(item) + '%\'\"').readlines()
+        #print CMD + ' -e \"show  global  status like \'' + str(item) + '%\'\"'
     return ret
     #qps_cmd = "show  global  status like 'Question%';"
     #my_cursor.execute(qps_cmd)
@@ -57,7 +57,9 @@ def get_delay_time():
 
 
 def main():
-    cur_counter, tps_counter, uptime = get_mysql_status()
+    ret = get_mysql_status()
+    print ret
+    #cur_counter, tps_counter, uptime = get_mysql_status()
     #delay_time = get_delay_time()
     #push_date = pub.P_data()
     #push_date.add(metric="Question", value=cur_counter, tag="srv=mysql")
