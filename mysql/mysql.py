@@ -12,39 +12,34 @@ DB_port = 3306
 DB_user = "root"
 DB_passwd = "password"
 
+if DB_passwd:
+    CMD = "mysql -u%s -p%s -h%s -P%d " % (DB_user, DB_host, DB_port, DB_passwd)
+else:
+    CMD = "mysql -u%s -p%s -h%s " % (DB_user, DB_host, DB_port)
+
 METRICS = ['Questions',
            'Com_commit',
            'Com_rollback',
-           'Uptime',]
-
-def mysql_conn():
-    if DB_passwd:
-        conn = MySQLdb.Connect(host=DB_host, 
-                               port=DB_port, 
-                               user=DB_user,
-                               passwd=DB_passwd)
-    else:
-        conn = MySQLdb.Connect(host=DB_host, port=DB_port, user=DB_user)
-    cursor = conn.cursor()
-    return cursor
+           'Uptime']
 
 
 def get_mysql_status():
-     if DB_passwd:
-        delay_cmd = "mysql -u%s -p%s -h%s -P%d -e 'show slave status;'" % (DB_user, DB_passwd, DB_host, DB_port)
-    else:
-        delay_cmd = "mysql -u%s  -h%s -P%d -e 'show slave status;'" % (DB_user, DB_host, DB_port)
-    qps_cmd = "show  global  status like 'Question%';"
-    my_cursor.execute(qps_cmd)
-    cur_counter = my_cursor.fetchall()[0][1]
-    tps_cmd_commit = "show global status like 'Com_commit'; "
-    my_cursor.execute(tps_cmd_commit)
-    cur_commit_counter = my_cursor.fetchall()[0][1]
-    tps_cmd_rollback = "show global status like 'Com_rollback';"
-    my_cursor.execute(tps_cmd_rollback)
-    cur_rollback_counter = my_cursor.fetchall()[0][1]
-    tps_counter = cur_rollback_counter + cur_commit_counter
-    return cur_counter, tps_counter
+    ret = {}
+    for item in METRICS:
+        ret[item] = ctl(CMD + ' -e ' + str(item)).readlines()
+    print ret
+    return ret
+    #qps_cmd = "show  global  status like 'Question%';"
+    #my_cursor.execute(qps_cmd)
+    #cur_counter = my_cursor.fetchall()[0][1]
+    #tps_cmd_commit = "show global status like 'Com_commit'; "
+    #my_cursor.execute(tps_cmd_commit)
+    #cur_commit_counter = my_cursor.fetchall()[0][1]
+    #tps_cmd_rollback = "show global status like 'Com_rollback';"
+    #my_cursor.execute(tps_cmd_rollback)
+    #cur_rollback_counter = my_cursor.fetchall()[0][1]
+    #tps_counter = cur_rollback_counter + cur_commit_counter
+    #return cur_counter, tps_counter, uptime
 
 
 def get_delay_time():
@@ -62,15 +57,15 @@ def get_delay_time():
 
 
 def main():
-    cur_counter, tps_counter = get_mysql_status()
+    cur_counter, tps_counter, uptime = get_mysql_status()
     #delay_time = get_delay_time()
-    push_date = pub.P_data()
-    push_date.add(metric="Question", value=cur_counter, tag="srv=mysql")
-    push_date.add(metric="QPS", value=cur_counter, tag="srv=mysql", counterType="COUNTER")
-    push_date.add(metric="Transaction", value=tps_counter, tag="srv=mysql")
-    push_date.add(metric="TPS", value=tps_counter, tag="srv=mysql", counterType="COUNTER")
-    #push_date.add(metric="Seconds_Behind_Master", value=delay_time, tag="srv=mysql")
-    push_date.push()
+    #push_date = pub.P_data()
+    #push_date.add(metric="Question", value=cur_counter, tag="srv=mysql")
+    #push_date.add(metric="QPS", value=cur_counter, tag="srv=mysql", counterType="COUNTER")
+    #push_date.add(metric="Transaction", value=tps_counter, tag="srv=mysql")
+    #push_date.add(metric="TPS", value=tps_counter, tag="srv=mysql", counterType="COUNTER")
+    ##push_date.add(metric="Seconds_Behind_Master", value=delay_time, tag="srv=mysql")
+    #push_date.push()
 
 
 if __name__ == "__main__":
