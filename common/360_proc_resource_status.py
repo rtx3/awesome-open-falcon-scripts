@@ -106,7 +106,7 @@ if __name__ == "__main__":
         for pid in item:            
             d = Resource(pid=pid, tag=item[pid]).run()
         if d:
-        print push(d)
+            print push(d)
     #d = Resource(sys.argv[1]).run()
     #if d:
     #    print json.dumps(d)
