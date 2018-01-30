@@ -75,7 +75,7 @@ class Resource():
 
 def get_pid():
         cmd="ps aux | awk '{print $2, $4, $11}' | sort -k2rn | head -n 10"
-        return os.popen(cmd).read().strip("\n")
+        return os.popen(cmd).readlines()
 
 if __name__ == "__main__":
     print get_pid()
