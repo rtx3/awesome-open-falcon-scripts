@@ -12,9 +12,10 @@ import json
 import copy
 
 class Resource():
-    def __init__(self, pid):
+    def __init__(self, pid, tag):
         self.host = socket.gethostname()
         self.pid = pid
+        self.tag = tag
 
     def get_cpu_user(self):
         cmd="cat /proc/" + str(self.pid)  +  "/stat |awk '{print $14+$16}'"
@@ -54,15 +55,15 @@ class Resource():
             return
 
         output = []
-        for resource in  self.resources_d.keys():
+        for resource in self.resources_d.keys():
                 t = {}
                 t['endpoint'] = self.host
                 t['timestamp'] = int(time.time())
-                t['step'] = 60
+                t['step'] = 360
                 t['counterType'] = self.resources_d[resource][1]
                 t['metric'] = resource
-                t['value']= self.resources_d[resource][0]()
-                t['tags'] = 'pid=%s' %self.pid
+                t['value'] = self.resources_d[resource][0]()
+                t['tags'] = "pid=%s,top=%s" % (self.pid, self.tag)
 
                 output.append(t)
 
@@ -71,7 +72,13 @@ class Resource():
     def dump_data(self):
         return json.dumps()
 
+
+def get_pid():
+        cmd="ps aux | awk '{print $2, $4, $11}' | sort -k2rn | head -n 10"
+        return os.popen(cmd).read().strip("\n")
+
 if __name__ == "__main__":
-    d = Resource(sys.argv[1]).run()
-    if d:
-        print json.dumps(d)
+    print get_pid()
+    #d = Resource(sys.argv[1]).run()
+    #if d:
+    #    print json.dumps(d)
