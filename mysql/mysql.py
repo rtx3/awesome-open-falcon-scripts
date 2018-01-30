@@ -13,7 +13,7 @@ DB_user = "root"
 DB_passwd = "password"
 
 if DB_passwd:
-    CMD = "mysql -u%s -p%s -h%s -P%d " % (DB_user, DB_host, DB_port, DB_passwd)
+    CMD = "mysql -u%s -p%s -h%s -P%d " % (DB_user, DB_passwd, DB_host, DB_port)
 else:
     CMD = "mysql -u%s -p%s -h%s " % (DB_user, DB_host, DB_port)
 
