@@ -30,7 +30,7 @@ def get_mysql_status():
                            + str(item) + '%\'\"').readlines()
         status = result[1].split("\t")[1].strip('\n')
         try:
-            assert(isinstance(int(status), (float, long)))
+            assert(isinstance(int(status), (int, long)))
             ret[item] = int(status)
         except AssertionError:
             continue
