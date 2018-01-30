@@ -10,6 +10,10 @@ import socket
 import time
 import json
 import copy
+import httplib
+
+
+PUSH_PATH = "127.0.0.1:1988"
 
 class Resource():
     def __init__(self, pid, tag):
@@ -73,8 +77,16 @@ class Resource():
         return json.dumps()
 
 
+def push(data):
+    data = json.dumps(data)
+    h = httplib.HTTPConnection(PUSH_PATH)        
+    h.request('POST', '/v1/push', data)        
+    r = h.getresponse()        
+    print r.read()
+
+
 def get_pid():
-    cmd="ps aux | awk '{print $2, $4, $11}' | sort -k2rn | head -n 10"
+    cmd = "ps aux | awk '{print $2, $4, $11}' | sort -k2rn | head -n 10"
     ret = []
     for item in os.popen(cmd).readlines():
         pid = {}
@@ -93,7 +105,8 @@ if __name__ == "__main__":
     for item in pids:
         for pid in item:            
             d = Resource(pid=pid, tag=item[pid]).run()
-        print json.dumps(d)
+        if d:
+        print push(d)
     #d = Resource(sys.argv[1]).run()
     #if d:
     #    print json.dumps(d)
