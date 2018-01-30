@@ -86,7 +86,7 @@ def get_pid():
     return pid
 
 if __name__ == "__main__":
-    #print get_pid()
+    print get_pid()
     pids = get_pid()
     for pid in pids:
         d = Resource(pid=pid.key, tag=pid.value).run()
