@@ -90,8 +90,9 @@ def get_pid():
 if __name__ == "__main__":
     print get_pid()
     pids = get_pid()
-    for pid in pids:
-        d = Resource(pid=pid.key, tag=pid.value).run()
+    for item in pids:
+        for pid in item:            
+            d = Resource(pid=pid, tag=item[pid]).run()
         print json.dumps(d)
     #d = Resource(sys.argv[1]).run()
     #if d:
