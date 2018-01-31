@@ -69,7 +69,7 @@ def get_resources():
 
 if __name__ == "__main__":
     resources = get_resources()
-    print resources
+    print resources, type(resources)
     print "Pushing...."
     d = Resource(metrics=resources).run()
     print d
