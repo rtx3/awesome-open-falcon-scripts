@@ -197,28 +197,29 @@ class HTTPOk:
             if self.eager or len(specs) > 0:
 
                 try:
-                    for will_retry in range(
-                            self.timeout // (self.retry_time or 1) - 1 ,
-                            -1, -1):
-                        try:
-                            http_ret = self.httpreport(conn, '/test', 'OK')
-                            self.log("HTTP:" + str(http_ret))
-                            #headers = {'User-Agent': 'httpok'}
-                            #conn.request('GET', path, headers=headers)
-                            break
-                        except socket.error as e:
-                            self.log("ERROR:" + str(e))
-                            if e.errno == 111 and will_retry:
-                                time.sleep(self.retry_time)
-                            else:
-                                raise
-
-                    #res = conn.getresponse()
-                    #body = res.read()
-                    #status = res.status
-                    msg = 'status contacting %s: %s %s' % (self.url,
-                                                           res.status,
-                                                           res.reason)
+                    status = self.httpreport(conn, '/test', 'OK')
+                    self.log("HTTP:" + str(status))
+                    #for will_retry in range(
+                    #        self.timeout // (self.retry_time or 1) - 1 ,
+                    #        -1, -1):
+                    #    try:
+                    #        http_ret = self.httpreport(conn, '/test', 'OK')
+                    #        self.log("HTTP:" + str(http_ret))
+                    #        #headers = {'User-Agent': 'httpok'}
+                    #        #conn.request('GET', path, headers=headers)
+                    #        break
+                    #    except socket.error as e:
+                    #        self.log("ERROR:" + str(e))
+                    #        if e.errno == 111 and will_retry:
+                    #            time.sleep(self.retry_time)
+                    #        else:
+                    #            raise
+                    ##res = conn.getresponse()
+                    ##body = res.read()
+                    ##status = res.status
+                    #msg = 'status contacting %s: %s %s' % (self.url,
+                    #                                       res.status,
+                    #                                       res.reason)
                 except Exception as e:
                     body = ''
                     status = None
@@ -295,7 +296,7 @@ class HTTPOk:
             self.mail(self.email, subject, message)
 
     def mail(self, email, subject, msg):
-        body =  'To: %s\n' % self.email
+        body = 'To: %s\n' % self.email
         body += 'Subject: %s\n' % subject
         body += '\n'
         body += msg
