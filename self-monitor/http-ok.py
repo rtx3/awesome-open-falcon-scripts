@@ -22,6 +22,10 @@ class HttpStatus:
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
+    def listProcesses(self, state=None):
+        return [x for x in self.rpc.supervisor.getAllProcessInfo()
+                   if x['name'] in self.programs and
+                      (state is None or x['state'] == state)]
     def runforever(self, test=False):
         # 死循环, 处理完 event 不退出继续处理下一个
         while 1:
