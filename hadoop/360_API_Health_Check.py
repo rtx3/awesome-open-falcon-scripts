@@ -14,7 +14,7 @@ import httplib
 
 
 PUSH_PATH = "127.0.0.1:1988"
-API_PATH = "127.0.0.1:8088"
+API_PATH = "localhost:8088"
 PREFIX = "hadoop."
 TAGS = ""
 API = "/ws/v1/cluster/metrics"
