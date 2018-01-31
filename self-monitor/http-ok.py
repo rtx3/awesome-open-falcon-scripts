@@ -48,7 +48,7 @@ class HttpStatus:
             specs = self.listProcesses(ProcessStates.RUNNING)
             self.stdout.write("RUNING:" + str(specs))
             try:
-                httpreport('/test','test')
+                self.httpreport('/test', 'test')
             except Exception as e:
                 self.stderr.write("ERROR" + str(e))
             # 解析 payload, 这里我们只用这个 pheaders.
