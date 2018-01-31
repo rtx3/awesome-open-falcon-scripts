@@ -48,9 +48,10 @@ class HttpStatus:
             specs = self.listProcesses(ProcessStates.RUNNING)
             self.stdout.write("RUNING:" + str(specs))
             try:
-                self.httpreport('/test', 'test')
+                d = self.httpreport('/test', 'test')
+                self.stdout.write("STATUS: "str(d))
             except Exception as e:
-                self.stderr.write("ERROR" + str(e))
+                self.stderr.write("ERROR: " + str(e))
             # 解析 payload, 这里我们只用这个 pheaders.
             # pdata 在 PROCESS_LOG_STDERR 和 PROCESS_COMMUNICATION_STDOUT 等类型的 event 中才有
             #pheaders, pdata = childutils.eventdata(payload + '\n')
