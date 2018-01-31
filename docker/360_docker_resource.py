@@ -81,7 +81,16 @@ def get_resources():
         ret.append(resource)
     return ret
 
+
+def check_docker_version():
+    cmd = "docker -v|awk '{print $3}'"
+    result = os.popen(cmd).readlines()
+    docker_version = result.split('.')
+    print docker_version
+
+
 if __name__ == "__main__":
+    check_docker_version()
     resources = get_resources()
     print resources
     print "Pushing...."
