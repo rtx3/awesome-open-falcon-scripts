@@ -67,7 +67,8 @@ def push(data):
 
 
 def get_resources():
-    cmd = "curl http://" + API_PATH + API 
+    cmd = "curl http://" + API_PATH + API
+    print cmd
     ret = []
     for item in os.popen(cmd).readlines():
         print item
