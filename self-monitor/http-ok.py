@@ -221,6 +221,7 @@ class HTTPOk:
                     #                                       res.status,
                     #                                       res.reason)
                 except Exception as e:
+                    self.log("ERROR:" + str(e))
                     body = ''
                     status = None
                     msg = 'error contacting %s:\n\n %s' % (self.url, e)
