@@ -33,7 +33,7 @@ class HttpStatus:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
         data = urllib.urlencode({'value': value})
         h = httplib.HTTPConnection('localhost:2379')
-        r = h.request('POST', '/v2/keys/' + str(key), data, headers)
+        r = h.request('POST', '/v2/keys' + str(key), data, headers)
         return r
     def runforever(self, test=False):
         # 死循环, 处理完 event 不退出继续处理下一个
