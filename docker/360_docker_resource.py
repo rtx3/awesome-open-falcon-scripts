@@ -75,8 +75,8 @@ def get_resources():
     ret = []
     for item in os.popen(cmd).readlines():
         resource = {}
-        resource[int(item.split()[0])] = [item.split()[1].strip("\n").strip("%"),
-                                          item.split()[2].strip("\n").strip("%")]
+        resource[item.split()[0]] = [item.split()[1].strip("\n").strip("%"),
+                                     item.split()[2].strip("\n").strip("%")]
         ret.append(resource)
     return ret
 
