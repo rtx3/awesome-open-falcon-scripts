@@ -85,8 +85,7 @@ def get_resources():
 def check_docker_version():
     cmd = "docker -v|awk '{print $3}'"
     result = os.popen(cmd).readlines()
-    print result
-    docker_version = result.split('.')
+    docker_version = result[0].split('.')
     print docker_version
 
 
