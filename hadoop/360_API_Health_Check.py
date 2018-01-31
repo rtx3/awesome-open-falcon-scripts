@@ -70,7 +70,7 @@ def get_resources():
     cmd = "curl -s http://" + API_PATH + API
     ret = []
     result = os.popen(cmd).readlines()
-    print result
+    print json.loads(result[0])['clusterMetrics']
     #for item in os.popen(cmd).readlines():
     #    print item
         #resource = {}
