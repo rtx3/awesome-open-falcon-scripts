@@ -1,442 +1,142 @@
-#!/usr/bin/env python 
-##############################################################################
-#
-# Copyright (c) 2007 Agendaless Consulting and Contributors.
-# All Rights Reserved.
-#
-# This software is subject to the provisions of the BSD-like license at
-# http://www.repoze.org/LICENSE.txt.  A copy of the license should accompany
-# this distribution.  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL
-# EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO,
-# THE IMPLIED WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND
-# FITNESS FOR A PARTICULAR PURPOSE
-#
-##############################################################################
-
-# A event listener meant to be subscribed to TICK_60 (or TICK_5)
-# events, which restarts processes that are children of
-# supervisord based on the response from an HTTP port.
-
-# A supervisor config snippet that tells supervisor to use this script
-# as a listener is below.
-#
-# [eventlistener:httpok]
-# command=python -u /bin/httpok http://localhost:8080/tasty/service
-# events=TICK_60
-
-doc = """\
-httpok.py [-p processname] [-a] [-g] [-t timeout] [-c status_code] [-b inbody]
-          [-m mail_address] [-s sendmail] URL
-
-Options:
-
--p -- specify a supervisor process_name.  Restart the supervisor
-      process named 'process_name' if it's in the RUNNING state when
-      the URL returns an unexpected result or times out.  If this
-      process is part of a group, it can be specified using the
-      'group_name:process_name' syntax.
-
--a -- Restart any child of the supervisord under in the RUNNING state
-      if the URL returns an unexpected result or times out.  Overrides
-      any -p parameters passed in the same httpok process
-      invocation.
-
--g -- The ``gcore`` program.  By default, this is ``/usr/bin/gcore
-      -o``.  The program should accept two arguments on the command
-      line: a filename and a pid.
-
--d -- Core directory.  If a core directory is specified, httpok will
-      try to use the ``gcore`` program (see ``-g``) to write a core
-      file into this directory against each hung process before we
-      restart it.  Append gcore stdout output to email.
-
--t -- The number of seconds that httpok should wait for a response
-      before timing out.  If this timeout is exceeded, httpok will
-      attempt to restart processes in the RUNNING state specified by
-      -p or -a.  This defaults to 10 seconds.
-
--c -- specify an expected HTTP status code from a GET request to the
-      URL.  If this status code is not the status code provided by the
-      response, httpok will attempt to restart processes in the
-      RUNNING state specified by -p or -a.  Default is 200.
-
--b -- specify a string which should be present in the body resulting
-      from the GET request.  If this string is not present in the
-      response, the processes in the RUNNING state specified by -p
-      or -a will be restarted.  The default is to ignore the
-      body.
-
--s -- the sendmail command to use to send email
-      (e.g. "/usr/sbin/sendmail -t -i").  Must be a command which accepts
-      header and message data on stdin and sends mail.
-      Default is "/usr/sbin/sendmail -t -i".
-
--m -- specify an email address.  The script will send mail to this
-      address when httpok attempts to restart processes.  If no email
-      address is specified, email will not be sent.
-
--e -- "eager":  check URL / emit mail even if no process we are monitoring
-      is in the RUNNING state.  Enabled by default.
-
--E -- not "eager":  do not check URL / emit mail if no process we are
-      monitoring is in the RUNNING state.
-
--n -- optionally specify the name of the httpok process.  This name will
-      be used in the email subject to identify which httpok process
-      restarted the process.
-
-URL -- The URL to which to issue a GET request.
-
-The -c option may be specified more than once, allowing for
-specification of multiple expected HTTP status codes.
-
-The -p option may be specified more than once, allowing for
-specification of multiple processes.  Specifying -a overrides any
-selection of -p.
-
-A sample invocation:
-
-httpok.py -p program1 -p group1:program2 http://localhost:8080/tasty
-
-"""
-
-import getopt
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# A event listener meant to be subscribed to PROCESS_STATE_CHANGE
+# events.  It will send mail when processes that are children of
+# supervisord transition unexpectedly to the EXITED state.
 import os
 import socket
 import sys
-import time
-from compat import urlparse
-from compat import xmlrpclib
-import urllib
-import httplib
 from supervisor import childutils
 from supervisor.states import ProcessStates
-from supervisor.options import make_namespec
 
-import timeoutconn
-
-def usage(exitstatus=255):
-    print(doc)
-    sys.exit(exitstatus)
-
-class HTTPOk:
-    connclass = None
-    def __init__(self, rpc, programs, any, url, timeout, statuses, inbody,
-                 email, sendmail, coredir, gcore, eager, retry_time, name):
-        self.rpc = rpc
+def usage():
+    print doc
+    sys.exit(255)
+class HttpStatus:
+    def __init__(self, programs, any, email, sendmail, optionalheader):
         self.programs = programs
         self.any = any
-        self.url = url
-        self.timeout = timeout
-        self.retry_time = retry_time
-        self.statuses = statuses
-        self.inbody = inbody
         self.email = email
         self.sendmail = sendmail
-        self.coredir = coredir
-        self.gcore = gcore
-        self.eager = eager
+        self.optionalheader = optionalheader
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
-        self.name = name
-
-    def listProcesses(self, state=None):
-        return [x for x in self.rpc.supervisor.getAllProcessInfo()
-                   if x['name'] in self.programs and
-                      (state is None or x['state'] == state)]
-
-
-    def httpreport(self, connection, key, value):
-        headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
-        data = urllib.urlencode({'value': value})
-        h = httplib.HTTPConnection('localhost:2379')
-        r = h.request('POST', '/v2/keys/' + str(key), data, headers).getresponse()  
-        return r.status
-
-
-    def log(self, msg):
-        self.stdout.write('%s\n' % msg)
-        
-
     def runforever(self, test=False):
-        parsed = urlparse.urlsplit(self.url)
-        scheme = parsed.scheme.lower()
-        hostport = parsed.netloc
-        path = parsed.path
-        query = parsed.query
-
-        if query:
-            path += '?' + query
-
-        if self.connclass:
-            ConnClass = self.connclass
-        elif scheme == 'http':
-            ConnClass = timeoutconn.TimeoutHTTPConnection
-        elif scheme == 'https':
-            ConnClass = timeoutconn.TimeoutHTTPSConnection
-        else:
-            raise ValueError('Bad scheme %s' % scheme)
-
+        # 死循环, 处理完 event 不退出继续处理下一个
         while 1:
-            # we explicitly use self.stdin, self.stdout, and self.stderr
-            # instead of sys.* so we can unit test this code
+            # 使用 self.stdin, self.stdout, self.stderr 代替 sys.* 以便单元测试
             headers, payload = childutils.listener.wait(self.stdin, self.stdout)
-
-            if not headers['eventname'].startswith('TICK'):
-                # do nothing with non-TICK events
-                childutils.listener.ok(self.stdout)
-                if test:
-                    break
-                continue
-
-            conn = ConnClass(hostport)
-            conn.timeout = self.timeout
-
-            specs = self.listProcesses(ProcessStates.RUNNING)
-            self.log("PROC RUNNING:" + str(specs))
-            if self.eager or len(specs) > 0:
-
-                try:
-                    status = self.httpreport(conn, '/test', 'OK')
-                    self.log("HTTP:" + str(status))
-                    #for will_retry in range(
-                    #        self.timeout // (self.retry_time or 1) - 1 ,
-                    #        -1, -1):
-                    #    try:
-                    #        http_ret = self.httpreport(conn, '/test', 'OK')
-                    #        self.log("HTTP:" + str(http_ret))
-                    #        #headers = {'User-Agent': 'httpok'}
-                    #        #conn.request('GET', path, headers=headers)
-                    #        break
-                    #    except socket.error as e:
-                    #        self.log("ERROR:" + str(e))
-                    #        if e.errno == 111 and will_retry:
-                    #            time.sleep(self.retry_time)
-                    #        else:
-                    #            raise
-                    ##res = conn.getresponse()
-                    ##body = res.read()
-                    ##status = res.status
-                    #msg = 'status contacting %s: %s %s' % (self.url,
-                    #                                       res.status,
-                    #                                       res.reason)
-                except Exception as e:
-                    self.log("ERROR:" + str(e))
-                    body = ''
-                    status = None
-                    msg = 'error contacting %s:\n\n %s' % (self.url, e)
-
-                if status not in self.statuses:
-                    subject = self.format_subject(
-                        '%s: bad status returned' % self.url
-                        )
-                    self.act(subject, msg)
-                elif self.inbody and self.inbody not in body:
-                    subject = self.format_subject(
-                        '%s: bad body returned' % self.url
-                    )
-                    self.act(subject, msg)
-
-            childutils.listener.ok(self.stdout)
             if test:
-                break
-
-    def format_subject(self, subject):
-        if self.name is None:
-            return 'httpok: %s' % subject
-        else:
-            return 'httpok [%s]: %s' % (self.name, subject)
-
-    def act(self, subject, msg):
-        messages = [msg]
-
-        def write(msg):
-            self.stderr.write('%s\n' % msg)
+                self.stderr.write(str(headers) + '\n')
+                self.stderr.write(payload + '\n')
+                self.stderr.flush()
+            if not headers['eventname'].startswith('TICK'):
+                childutils.listener.ok(self.stdout)
+                continue
+            specs = self.listProcesses(ProcessStates.RUNNING)
+            self.stdin.write("RUNING:"+str(specs))
+            # 解析 payload, 这里我们只用这个 pheaders.
+            # pdata 在 PROCESS_LOG_STDERR 和 PROCESS_COMMUNICATION_STDOUT 等类型的 event 中才有
+            #pheaders, pdata = childutils.eventdata(payload + '\n')
+            # 过滤掉 expected 的 event, 仅处理 unexpected 的
+            # 当 program 的退出码为对应配置中的 exitcodes 值时, expected=1; 否则为0
+            #if int(pheaders['expected']):
+            #    childutils.listener.ok(self.stdout)
+            #    continue
+            hostname = socket.gethostname()
+            ip = socket.gethostbyname(hostname)
+            # 构造报警内容
+            #msg = "Host: %s(%s)\nProcess: %s\nPID: %s\nEXITED unexpectedly from state: %s" % \
+            #      (hostname, ip, pheaders['processname'], pheaders['pid'], pheaders['from_state'])
+            #subject = ' %s crashed at %s' % (pheaders['processname'],
+            #                                 childutils.get_asctime())
+            #if self.optionalheader:
+            #    subject = '[' + self.optionalheader + ']' + subject
+            self.stderr.write('unexpected exit, mailing\n')
             self.stderr.flush()
-            messages.append(msg)
-
-        try:
-            specs = self.rpc.supervisor.getAllProcessInfo()
-        except Exception as e:
-            write('Exception retrieving process info %s, not acting' % e)
-            return
-
-        waiting = list(self.programs)
-
-        if self.any:
-            write('Restarting all running processes')
-            for spec in specs:
-                name = spec['name']
-                group = spec['group']
-                self.restart(spec, write)
-                namespec = make_namespec(group, name)
-                if name in waiting:
-                    waiting.remove(name)
-                if namespec in waiting:
-                    waiting.remove(namespec)
-        else:
-            write('Restarting selected processes %s' % self.programs)
-            for spec in specs:
-                name = spec['name']
-                group = spec['group']
-                namespec = make_namespec(group, name)
-                if (name in self.programs) or (namespec in self.programs):
-                    self.restart(spec, write)
-                    if name in waiting:
-                        waiting.remove(name)
-                    if namespec in waiting:
-                        waiting.remove(namespec)
-
-        if waiting:
-            write(
-                'Programs not restarted because they did not exist: %s' %
-                waiting)
-
-        if self.email:
-            message = '\n'.join(messages)
-            self.mail(self.email, subject, message)
-
+            #self.mail(self.email, subject, msg)
+            # 向 stdout 写入"RESULT\nOK"，并进入下一次循环
+            childutils.listener.ok(self.stdout)
+    # 发送邮件, 可以用自己的, 也可以抽出来作为一个 module 复用
     def mail(self, email, subject, msg):
         body = 'To: %s\n' % self.email
         body += 'Subject: %s\n' % subject
         body += '\n'
         body += msg
-        with os.popen(self.sendmail, 'w') as m:
-            m.write(body)
+        m = os.popen(self.sendmail, 'w')
+        m.write(body)
+        m.close()
         self.stderr.write('Mailed:\n\n%s' % body)
         self.mailed = body
-
-    def restart(self, spec, write):
-        namespec = make_namespec(spec['group'], spec['name'])
-        if spec['state'] is ProcessStates.RUNNING:
-            if self.coredir and self.gcore:
-                corename = os.path.join(self.coredir, namespec)
-                cmd = self.gcore + ' "%s" %s' % (corename, spec['pid'])
-                with os.popen(cmd) as m:
-                    write('gcore output for %s:\n\n %s' % (
-                        namespec, m.read()))
-            write('%s is in RUNNING state, restarting' % namespec)
-            try:
-                self.rpc.supervisor.stopProcess(namespec)
-            except xmlrpclib.Fault as e:
-                write('Failed to stop process %s: %s' % (
-                    namespec, e))
-
-            try:
-                self.rpc.supervisor.startProcess(namespec)
-            except xmlrpclib.Fault as e:
-                write('Failed to start process %s: %s' % (
-                    namespec, e))
-            else:
-                write('%s restarted' % namespec)
-
-        else:
-            write('%s not in RUNNING state, NOT restarting' % namespec)
-
-
 def main(argv=sys.argv):
-    short_args="hp:at:c:b:s:m:g:d:eEn:"
-    long_args=[
+    # 参数解析
+    import getopt
+    short_args = "hp:ao:s:m:"
+    long_args = [
         "help",
         "program=",
         "any",
-        "timeout=",
-        "code=",
-        "body=",
+        "optionalheader="
         "sendmail_program=",
         "email=",
-        "gcore=",
-        "coredir=",
-        "eager",
-        "not-eager",
-        "name=",
-        ]
+    ]
     arguments = argv[1:]
     try:
         opts, args = getopt.getopt(arguments, short_args, long_args)
     except:
         usage()
-
-    # check for -h must be done before positional args check
-    for option, value in opts:
-        if option in ('-h', '--help'):
-            usage(exitstatus=0)
-
-    if not args:
-        usage()
-    if len(args) > 1:
-        usage()
-
     programs = []
     any = False
     sendmail = '/usr/sbin/sendmail -t -i'
-    gcore = '/usr/bin/gcore -o'
-    coredir = None
-    eager = True
     email = None
-    timeout = 10
-    retry_time = 10
-    statuses = []
-    inbody = None
-    name = None
-
+    optionalheader = None
     for option, value in opts:
-
+        if option in ('-h', '--help'):
+            usage()
         if option in ('-p', '--program'):
             programs.append(value)
-
         if option in ('-a', '--any'):
-            any = True
-
+            any = False
         if option in ('-s', '--sendmail_program'):
             sendmail = value
-
         if option in ('-m', '--email'):
             email = value
-
-        if option in ('-t', '--timeout'):
-            timeout = int(value)
-
-        if option in ('-c', '--code'):
-            statuses.append(int(value))
-
-        if option in ('-b', '--body'):
-            inbody = value
-
-        if option in ('-g', '--gcore'):
-            gcore = value
-
-        if option in ('-d', '--coredir'):
-            coredir = value
-
-        if option in ('-e', '--eager'):
-            eager = True
-
-        if option in ('-E', '--not-eager'):
-            eager = False
-
-        if option in ('-n', '--name'):
-            name = value
-
-    if not statuses:
-        statuses = [200, 201]
-
-    url = arguments[-1]
-
-    try:
-        rpc = childutils.getRPCInterface(os.environ)
-    except KeyError as e:
-        if e.args[0] != 'SUPERVISOR_SERVER_URL':
-            raise
-        sys.stderr.write('httpok must be run as a supervisor event '
+        if option in ('-o', '--optionalheader'):
+            optionalheader = value
+    # listener 必须交由 supervisor 管理, 自己运行是不行的
+    if not 'SUPERVISOR_SERVER_URL' in os.environ:
+        sys.stderr.write('crashmail must be run as a supervisor event '
                          'listener\n')
         sys.stderr.flush()
         return
-
-    prog = HTTPOk(rpc, programs, any, url, timeout, statuses, inbody, email,
-                  sendmail, coredir, gcore, eager, retry_time, name)
-    prog.runforever()
-
+    prog = HttpStatus(programs, any, email, sendmail, optionalheader)
+    prog.runforever(test=True)
 if __name__ == '__main__':
     main()
+# Usage
+doc = """\
+crashmail.py [-p processname] [-a] [-o string] [-m mail_address]
+             [-s sendmail] URL
+Options:
+-p -- specify a supervisor process_name.  Send mail when this process
+      transitions to the EXITED state unexpectedly. If this process is
+      part of a group, it can be specified using the
+      'process_name:group_name' syntax.
+-a -- Send mail when any child of the supervisord transitions
+      unexpectedly to the EXITED state unexpectedly.  Overrides any -p
+      parameters passed in the same crashmail process invocation.
+-o -- Specify a parameter used as a prefix in the mail subject header.
+-s -- the sendmail command to use to send email
+      (e.g. "/usr/sbin/sendmail -t -i").  Must be a command which accepts
+      header and message data on stdin and sends mail.  Default is
+      "/usr/sbin/sendmail -t -i".
+-m -- specify an email address.  The script will send mail to this
+      address when crashmail detects a process crash.  If no email
+      address is specified, email will not be sent.
+The -p option may be specified more than once, allowing for
+specification of multiple processes.  Specifying -a overrides any
+selection of -p.
+A sample invocation:
+crashmail.py -p program1 -p group1:program2 -m dev@example.com
+"""
