@@ -29,12 +29,17 @@ class HttpStatus:
         return [x for x in self.rpc.supervisor.getAllProcessInfo()
                    if x['name'] in self.programs and
                       (state is None or x['state'] == state)]
-    def httpreport(self, key, value):
+    def httpreport( key, value):
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
         data = urllib.urlencode({'value': value})
-        h = httplib.HTTPConnection('localhost:2379')
-        r = h.request('POST', '/v2/keys' + str(key), data, headers)
+        h = httplib.HTTPConnection('192.168.2.201:2379')
+        url = '/v2/keys' + str(key)
+        print url
+        h.request('PUT', url.strip(), data, headers)
+        print h 
+        r = h.getresponse()
         return r
+
     def runforever(self, test=False):
         # 死循环, 处理完 event 不退出继续处理下一个
         while 1:
