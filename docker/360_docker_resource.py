@@ -74,6 +74,7 @@ def get_resources():
            awk 'NR>1{print $2, $3, $7}'"
     ret = []
     for item in os.popen(cmd).readlines():
+        print item
         resource = {}
         resource[item.split()[0]] = [item.split()[1].strip("\n").strip("%"),
                                      item.split()[2].strip("\n").strip("%")]
