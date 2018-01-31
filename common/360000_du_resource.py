@@ -58,25 +58,27 @@ def push(data):
         h = httplib.HTTPConnection(PUSH_PATH)        
         h.request('POST', '/v1/push', data, headers)
     except Exception:
-        return 1        
+        print "Pushing Failed when sending data."
+        return 1
+    print "Pushing finished."        
     return 0
 
 
 def get_resources():
     cmd = "du -sx \
            --exclude=proc --exclude=docker --exclude=run \
-            --exclude=proc --exclude=hadoop \
-           './.*' /*  | sort -rh | head -3"
+           --exclude=proc --exclude=hadoop --exclude './.*' \
+           /*  | sort -rh | head -3"
     ret = []
     for item in os.popen(cmd).readlines():
-        pid = {}
+        resource = {}
         try:
             assert(isinstance(int(item.split()[0]), (int, long)))
         except AssertionError:
             print "ERROR: key is not int."
             continue
-        pid[int(item.split()[0])] = item.split()[-1].strip("\n").strip("/")
-        ret.append(pid)
+        resource[int(item.split()[0])] = item.split()[-1].strip("\n").strip("/")
+        ret.append(resource)
     return ret
 
 if __name__ == "__main__":
@@ -84,7 +86,10 @@ if __name__ == "__main__":
     print resources
     print "Pushing...."
     d = Resource(metrics=resources).run()
-    print d
+    if d:
+        push(d)
+    else:
+        print "Pushing Failed."
             #if d:
             #    print "OK. " + str(idx)
             #else:
