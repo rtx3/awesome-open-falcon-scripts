@@ -63,7 +63,10 @@ def push(data):
 
 
 def get_resources():
-    cmd = "du -sx --exclude=proc  --exclude './.*' /*  | sort -rh | head -3"
+    cmd = "du -sx \
+           --exclude=proc --exclude=docker --exclude=run \
+            --exclude=proc --exclude=hadoop \
+           './.*' /*  | sort -rh | head -3"
     ret = []
     for item in os.popen(cmd).readlines():
         pid = {}
