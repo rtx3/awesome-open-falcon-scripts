@@ -67,11 +67,12 @@ def push(data):
 
 
 def get_resources():
-    cmd = "curl http://" + API_PATH + API
-    print cmd
+    cmd = "curl -s http://" + API_PATH + API
     ret = []
-    for item in os.popen(cmd).readlines():
-        print item
+    result = json.loads(os.popen(cmd).readlines())
+    print result
+    #for item in os.popen(cmd).readlines():
+    #    print item
         #resource = {}
         #try:
         #    assert(isinstance(int(item.split()[0]), (int, long)))
