@@ -49,7 +49,7 @@ class HttpStatus:
             self.stdout.write("RUNING:" + str(specs))
             try:
                 d = self.httpreport('/test', 'test')
-                self.stdout.write("STATUS: "str(d))
+                self.stdout.write("STATUS: " + str(d))
             except Exception as e:
                 self.stderr.write("ERROR: " + str(e))
             # 解析 payload, 这里我们只用这个 pheaders.
