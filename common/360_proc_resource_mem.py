@@ -94,7 +94,7 @@ def get_pid():
         try:
             assert(isinstance(int(item.split()[0]), (int, long)))
         except AssertionError:
-            print "ERROR: value is not int."
+            print "ERROR: key is not int."
             continue
         pid[int(item.split()[0])] = item.split()[-1].strip("\n")
         ret.append(pid)

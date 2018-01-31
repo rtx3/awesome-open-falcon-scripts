@@ -85,7 +85,6 @@ def push(data):
     return 0
 
 
-
 def get_pid():
     cmd = "ps aux | awk '{print $2, $3, $11}' | sort -k2rn | head -n 5"
     ret = []
@@ -94,7 +93,7 @@ def get_pid():
         try:
             assert(isinstance(int(item.split()[0]), (int, long)))
         except AssertionError:
-            print "ERROR: value is not int."
+            print "ERROR: key is not int."
             continue
         pid[int(item.split()[0])] = item.split()[-1].strip("\n")
         ret.append(pid)
