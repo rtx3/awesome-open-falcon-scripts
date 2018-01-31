@@ -120,7 +120,7 @@ def main(argv=sys.argv):
         sys.stderr.flush()
         return
 
-    prog = HttpStatus(programs,rpc, any, email, sendmail, optionalheader)
+    prog = HttpStatus(rpc, programs, any, email, sendmail, optionalheader)
     prog.runforever(test=True)
 if __name__ == '__main__':
     main()
