@@ -108,6 +108,7 @@ import time
 from compat import urlparse
 from compat import xmlrpclib
 import urllib
+import httplib
 from supervisor import childutils
 from supervisor.states import ProcessStates
 from supervisor.options import make_namespec
@@ -149,8 +150,8 @@ class HTTPOk:
     def httpreport(self, connection, key, value):
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
         data = urllib.urlencode({'value': value})
-        h = connection.request('POST', '/v2/keys/' + str(key), data, headers)  
-        r = h.getresponse()
+        h = httplib.HTTPConnection('localhost:2379')
+        r = h.request('POST', '/v2/keys/' + str(key), data, headers).getresponse()  
         return r.status
 
 
