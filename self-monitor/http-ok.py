@@ -40,7 +40,7 @@ class HttpStatus:
                 childutils.listener.ok(self.stdout)
                 continue
             specs = self.listProcesses(ProcessStates.RUNNING)
-            self.stdin.write("RUNING:"+str(specs))
+            self.stdout.write("RUNING:"+str(specs))
             # 解析 payload, 这里我们只用这个 pheaders.
             # pdata 在 PROCESS_LOG_STDERR 和 PROCESS_COMMUNICATION_STDOUT 等类型的 event 中才有
             #pheaders, pdata = childutils.eventdata(payload + '\n')
