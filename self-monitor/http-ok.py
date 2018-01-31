@@ -27,6 +27,12 @@ class HttpStatus:
         return [x for x in self.rpc.supervisor.getAllProcessInfo()
                    if x['name'] in self.programs and
                       (state is None or x['state'] == state)]
+    def httpreport(self, key, value):
+        headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
+        data = urllib.urlencode({'value': value})
+        h = httplib.HTTPConnection('localhost:2379')
+        r = h.request('POST', '/v2/keys/' + str(key), data, headers)
+        return r
     def runforever(self, test=False):
         # 死循环, 处理完 event 不退出继续处理下一个
         while 1:
@@ -40,7 +46,11 @@ class HttpStatus:
                 childutils.listener.ok(self.stdout)
                 continue
             specs = self.listProcesses(ProcessStates.RUNNING)
-            self.stdout.write("RUNING:"+str(specs))
+            self.stdout.write("RUNING:" + str(specs))
+            try:
+                httpreport('/test','test')
+            except Exception as e:
+                self.stderr.write("ERROR" + str(e))
             # 解析 payload, 这里我们只用这个 pheaders.
             # pdata 在 PROCESS_LOG_STDERR 和 PROCESS_COMMUNICATION_STDOUT 等类型的 event 中才有
             #pheaders, pdata = childutils.eventdata(payload + '\n')
@@ -58,7 +68,7 @@ class HttpStatus:
             #                                 childutils.get_asctime())
             #if self.optionalheader:
             #    subject = '[' + self.optionalheader + ']' + subject
-            self.stderr.write('unexpected exit, mailing\n')
+            #self.stderr.write('unexpected exit, mailing\n')
             self.stderr.flush()
             #self.mail(self.email, subject, msg)
             # 向 stdout 写入"RESULT\nOK"，并进入下一次循环
