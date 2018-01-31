@@ -69,9 +69,22 @@ def push(data):
     return 0
 
 
-def get_resources():
+def get_resources_12():
     cmd = "docker stats --no-stream|\
            awk 'NR>1{print $2, $3, $7}'"
+    ret = []
+    for item in os.popen(cmd).readlines():
+        print item
+        resource = {}
+        resource[item.split()[0]] = [item.split()[1].strip("\n").strip("%"),
+                                     item.split()[2].strip("\n").strip("%")]
+        ret.append(resource)
+    return ret
+
+
+def get_resources_7():
+    cmd = "docker stats --no-stream|\
+           awk 'NR>1{print $1, $2, $6}'"
     ret = []
     for item in os.popen(cmd).readlines():
         print item
@@ -86,12 +99,15 @@ def check_docker_version():
     cmd = "docker -v|awk '{print $3}'"
     result = os.popen(cmd).readlines()
     docker_version = result[0].split('.')
-    print docker_version
+    return int(docker_version[0]), int(docker_version[1])
 
 
 if __name__ == "__main__":
-    check_docker_version()
-    resources = get_resources()
+    docker_major_ver, docker_minor_ver = check_docker_version()
+    if docker_minor_ver < 12:
+        resources = get_resources_7()
+    else:
+        resources = get_resources_12()
     print resources
     print "Pushing...."
     d = Resource(metrics=resources).run()
