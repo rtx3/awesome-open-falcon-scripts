@@ -28,7 +28,7 @@ class Resource():
     def run(self):
         for metric in self.metrics:
             resource_list = []
-            for key in metric:
+            for key in metric.keys():
                 resource_list.append(metric[key])
                 resource_list.append('GAUGE')
                 self.resources_d[PREFIX + key] = resource_list
