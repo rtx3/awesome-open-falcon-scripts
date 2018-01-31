@@ -153,6 +153,11 @@ class HTTPOk:
         r = h.getresponse()
         return r.status
 
+
+    def log(self, msg):
+        self.stdout.write('%s\n' % msg)
+        
+
     def runforever(self, test=False):
         parsed = urlparse.urlsplit(self.url)
         scheme = parsed.scheme.lower()
@@ -188,6 +193,7 @@ class HTTPOk:
             conn.timeout = self.timeout
 
             specs = self.listProcesses(ProcessStates.RUNNING)
+            self.log("PROC RUNNING:" + str(specs))
             if self.eager or len(specs) > 0:
 
                 try:
@@ -195,19 +201,21 @@ class HTTPOk:
                             self.timeout // (self.retry_time or 1) - 1 ,
                             -1, -1):
                         try:
-                            self.httpreport(conn, '/test', 'OK')
+                            http_ret = self.httpreport(conn, '/test', 'OK')
+                            self.log("HTTP:" + str(http_ret))
                             #headers = {'User-Agent': 'httpok'}
                             #conn.request('GET', path, headers=headers)
                             break
                         except socket.error as e:
+                            self.log("ERROR:" + str(e))
                             if e.errno == 111 and will_retry:
                                 time.sleep(self.retry_time)
                             else:
                                 raise
 
-                    res = conn.getresponse()
-                    body = res.read()
-                    status = res.status
+                    #res = conn.getresponse()
+                    #body = res.read()
+                    #status = res.status
                     msg = 'status contacting %s: %s %s' % (self.url,
                                                            res.status,
                                                            res.reason)
@@ -409,7 +417,7 @@ def main(argv=sys.argv):
             name = value
 
     if not statuses:
-        statuses = [200]
+        statuses = [200, 201]
 
     url = arguments[-1]
 
