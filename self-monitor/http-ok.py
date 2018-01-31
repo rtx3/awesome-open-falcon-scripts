@@ -6,6 +6,8 @@
 import os
 import socket
 import sys
+import urllib
+import httplib
 from supervisor import childutils
 from supervisor.states import ProcessStates
 
