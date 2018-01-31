@@ -90,15 +90,5 @@ if __name__ == "__main__":
         push(d)
     else:
         print "Pushing Failed."
-            #if d:
-            #    print "OK. " + str(idx)
-            #else:
-    #for idx, item in enumerate(resources):
-    #    for resource in item:            
-    #        print "Pushing" + str(resource) 
-            #d = Resource(metric=resource, tag=item[resource]).run()
-            #if d:
-            #    print "OK. " + str(idx)
-            #else:
-            #    print "Fail." + str(idx)
+
 
