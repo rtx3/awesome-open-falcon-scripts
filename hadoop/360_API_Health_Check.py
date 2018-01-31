@@ -26,12 +26,11 @@ class Resource():
         self.tag = TAGS
 
     def run(self):
-        for metric in self.metrics:
+        for key in self.metrics.keys():
             resource_list = []
-            for key in metric.keys():
-                resource_list.append(metric[key])
-                resource_list.append('GAUGE')
-                self.resources_d[PREFIX + key] = resource_list
+            resource_list.append(metrics[key])
+            resource_list.append('GAUGE')
+            self.resources_d[PREFIX + key] = resource_list
         output = []
         for resource in self.resources_d.keys():
                 t = {}
