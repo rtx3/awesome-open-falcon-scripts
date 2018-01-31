@@ -13,9 +13,10 @@ def usage():
     print doc
     sys.exit(255)
 class HttpStatus:
-    def __init__(self, programs, any, email, sendmail, optionalheader):
+    def __init__(self, rpc, programs, any, email, sendmail, optionalheader):
         self.programs = programs
         self.any = any
+        self.rpc = rpc
         self.email = email
         self.sendmail = sendmail
         self.optionalheader = optionalheader
@@ -108,13 +109,18 @@ def main(argv=sys.argv):
             email = value
         if option in ('-o', '--optionalheader'):
             optionalheader = value
-    # listener 必须交由 supervisor 管理, 自己运行是不行的
-    if not 'SUPERVISOR_SERVER_URL' in os.environ:
-        sys.stderr.write('crashmail must be run as a supervisor event '
+    
+    try:
+        rpc = childutils.getRPCInterface(os.environ)
+    except KeyError as e:
+        if e.args[0] != 'SUPERVISOR_SERVER_URL':
+            raise
+        sys.stderr.write('httpok must be run as a supervisor event '
                          'listener\n')
         sys.stderr.flush()
         return
-    prog = HttpStatus(programs, any, email, sendmail, optionalheader)
+
+    prog = HttpStatus(programs,rpc, any, email, sendmail, optionalheader)
     prog.runforever(test=True)
 if __name__ == '__main__':
     main()
