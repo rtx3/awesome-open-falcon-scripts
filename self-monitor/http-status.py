@@ -11,8 +11,8 @@ from supervisor import childutils
 from supervisor.states import ProcessStates
 
 KEY = "/cmdb/supervisor"
-AUTH = base64.b64encode('username'+ ':'+ 'passwords') 
-#USEPASS = False
+AUTH = base64.b64encode('username' + ':' + 'passwords') 
+
 
 def usage():
     print doc

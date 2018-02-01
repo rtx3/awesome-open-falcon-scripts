@@ -6,11 +6,12 @@ import sys
 import urllib
 import httplib
 import time
+import base64
 from supervisor import childutils
 from supervisor.states import ProcessStates
 
 KEY = "/cmdb/supervisor"
-
+AUTH = base64.b64encode('username' + ':' + 'passwords') 
 
 def usage():
     print doc
@@ -41,7 +42,7 @@ class HttpStatus:
 
     def httpreport(self, key, value):
         headers = {"Content-type": "application/x-www-form-urlencoded", 
-                   "Accept": "text/plain"}
+                   "Accept": "text/plain", "Authorization": "Basic " + AUTH}
         data = urllib.urlencode({'value': value})
         h = httplib.HTTPConnection('localhost:2379')
         url = '/v2/keys' + str(key)
