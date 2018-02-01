@@ -45,7 +45,7 @@ class HttpStatus:
         while 1:
             # 使用 self.stdin, self.stdout, self.stderr 代替 sys.* 以便单元测试
             headers, payload = childutils.listener.wait(self.stdin, self.stdout)
-            self.stdout.write("HEADERS: {}\n".fotmat(str(headers)))
+            self.stdout.write("HEADERS: {}\n".format(str(headers)))
             self.stdout.write("PAYLOAD: {}\n".format(str(payload)))
             if test:
                 self.stderr.write(str(headers) + '\n')
@@ -55,7 +55,7 @@ class HttpStatus:
                 childutils.listener.ok(self.stdout)
                 continue
             specs = self.listProcesses(ProcessStates.RUNNING)
-            self.stdout.write("RUNING:" + str(specs))
+            self.stdout.write("RUNING: {}\n".format(str(specs)))
             try:
                 d = self.httpreport('/test', 'test')
                 self.stdout.write("STATUS: " + str(d))
