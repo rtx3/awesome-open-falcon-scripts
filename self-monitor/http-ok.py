@@ -69,6 +69,8 @@ class HttpStatus:
                     self.stderr.write("REPORT STATUS:{} {} \n".format(proc['name'], str(d)))
             except Exception as e:
                 self.stderr.write("ERROR: " + str(e))
+                childutils.listener.fail(self.stdout)
+                continue
      
             self.stderr.flush()
             childutils.listener.ok(self.stdout)
