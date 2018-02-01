@@ -70,6 +70,7 @@ class HttpStatus:
                     d = self.httpreport(key, value)
                     self.stderr.write("REPORT STATUS:{} {} {} \n".format(pheaders['processname'],value, str(d)))
                 else:
+                    childutils.listener.ok(self.stdout)
                     continue
             except Exception as e:
                 self.stderr.write("ERROR: " + str(e))
