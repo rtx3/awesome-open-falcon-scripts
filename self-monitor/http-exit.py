@@ -54,24 +54,27 @@ class HttpStatus:
         while 1:
             # 使用 self.stdin, self.stdout, self.stderr 代替 sys.* 以便单元测试
             headers, payload = childutils.listener.wait(self.stdin, self.stdout)
-            self.stdout.write("HEADERS: {}\n".format(str(headers)))
-            self.stdout.write("PAYLOAD: {}\n".format(str(payload)))
+            self.stderr.write("HEADERS: {}\n".format(str(headers)))
+            self.stderr.write("PAYLOAD: {}\n".format(str(payload)))
             if not headers['eventname'].startswith('PROCESS_STATE'):
                 childutils.listener.ok(self.stdout)
                 continue
-            specs = self.listProcesses(ProcessStates.RUNNING)
-            self.stdout.write("RUNING: {}\n".format(str(specs)))
+            
+            self.stderr.write("EVENT: {}\n".format(headers['eventname']))
             try:
-                for proc in specs:
-                    key = "{0}/{1}/{2}/STATUS".format(KEY, self.hostname, proc['name'])
-                    value = int(time.time())
-                    d = self.httpreport(key, value)
-                    self.stdout.write("REPORT STATUS:{} {} \n".format(proc['name'], str(d)))
+
+                key = "{0}/{1}/{2}/STATUS/HTTPOK".format(KEY, self.hostname, proc['name'])
+                value = int(time.time())
+                d = self.httpreport(key, value)
+                self.stderr.write("REPORT STATUS:{} {} \n".format(proc['name'], str(d)))
             except Exception as e:
                 self.stderr.write("ERROR: " + str(e))
-
+                childutils.listener.fail(self.stdout)
+                continue
+     
             self.stderr.flush()
             childutils.listener.ok(self.stdout)
+        
     
     def mail(self, email, subject, msg):
         body = 'To: %s\n' % self.email
