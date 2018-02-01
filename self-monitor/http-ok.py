@@ -69,10 +69,10 @@ class HttpStatus:
                     self.stderr.write("REPORT STATUS:{} {} \n".format(proc['name'], str(d)))
             except Exception as e:
                 self.stderr.write("ERROR: " + str(e))
-            self.stdout.write("READY\n")
+     
             self.stderr.flush()
             childutils.listener.ok(self.stdout)
-            self.stdout.write("READY\n")
+        
     
     def mail(self, email, subject, msg):
         body = 'To: %s\n' % self.email
