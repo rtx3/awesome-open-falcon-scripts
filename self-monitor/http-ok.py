@@ -143,8 +143,8 @@ if __name__ == '__main__':
     main()
 # Usage
 doc = """\
-crashmail.py [-p processname] [-a] [-o string] [-m mail_address]
-             [-s sendmail] URL
+http-ok.py [-p processname] [-a] [-o string] [-m mail_address]
+             [-s sendmail] 
 Options:
 -p -- specify a supervisor process_name.  Send mail when this process
       transitions to the EXITED state unexpectedly. If this process is
@@ -165,5 +165,5 @@ The -p option may be specified more than once, allowing for
 specification of multiple processes.  Specifying -a overrides any
 selection of -p.
 A sample invocation:
-crashmail.py -p program1 -p group1:program2 -m dev@example.com
+http-ok.py -p program1 -p group1:program2 -m dev@example.com
 """

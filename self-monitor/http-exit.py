@@ -62,11 +62,11 @@ class HttpStatus:
             
             self.stderr.write("EVENT: {}\n".format(headers['eventname']))
             try:
-
-                key = "{0}/{1}/{2}/STATUS/HTTPOK".format(KEY, self.hostname, proc['name'])
-                value = int(time.time())
+                pheaders, pdata = childutils.eventdata(payload + '\n') 
+                key = "{0}/{1}/{2}/HTTPSTATUS".format(KEY, self.hostname, pheaders['processname'])
+                value = headers['eventname'].split('_')[-1]
                 d = self.httpreport(key, value)
-                self.stderr.write("REPORT STATUS:{} {} \n".format(proc['name'], str(d)))
+                self.stderr.write("REPORT STATUS:{} {} \n".format(pheaders['processname'], str(d)))
             except Exception as e:
                 self.stderr.write("ERROR: " + str(e))
                 childutils.listener.fail(self.stdout)
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     main()
 # Usage
 doc = """\
-crashmail.py [-p processname] [-a] [-o string] [-m mail_address]
+http-exit.py [-p processname] [-a] [-o string] [-m mail_address]
              [-s sendmail] URL
 Options:
 -p -- specify a supervisor process_name.  Send mail when this process
@@ -162,5 +162,5 @@ The -p option may be specified more than once, allowing for
 specification of multiple processes.  Specifying -a overrides any
 selection of -p.
 A sample invocation:
-crashmail.py -p program1 -p group1:program2 -m dev@example.com
+http-exit.py -p program1 -p group1:program2 -m dev@example.com
 """
