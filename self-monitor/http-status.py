@@ -11,7 +11,7 @@ from supervisor import childutils
 from supervisor.states import ProcessStates
 
 KEY = "/cmdb/supervisor"
-AUTH = base64.b64encode('username' + ':' + 'passwords') 
+#AUTH = base64.b64encode('username' + ':' + 'passwords') 
 
 
 def usage():
@@ -20,7 +20,7 @@ def usage():
 
 
 class HttpStatus:
-    def __init__(self, rpc, programs, any, email, sendmail, optionalheader):
+    def __init__(self, rpc, programs, any, email, sendmail, optionalheader, etcduser, etcdpassword):
         self.programs = programs
         self.any = any
         self.rpc = rpc
@@ -32,6 +32,7 @@ class HttpStatus:
         self.stderr = sys.stderr
         self.hostname = self.__hostname()
         self.ip = socket.gethostbyname(self.hostname)
+        self.AUTH = base64.b64encode(etcduser + ':' + etcdpassword) 
 
     def __hostname(self):
         return socket.gethostname()
@@ -43,7 +44,7 @@ class HttpStatus:
 
     def httpreport(self, key, value):
         headers = {"Content-type": "application/x-www-form-urlencoded", 
-                   "Accept": "text/plain", "Authorization": "Basic " + AUTH}
+                   "Accept": "text/plain", "Authorization": "Basic " + self.AUTH}
         data = urllib.urlencode({'value': value})
         h = httplib.HTTPConnection('localhost:2379')
         url = '/v2/keys' + str(key)
@@ -98,8 +99,10 @@ class HttpStatus:
 def main(argv=sys.argv):
     # 参数解析
     import getopt
-    short_args = "hp:ao:s:m:"
+    short_args = "u:pa:hp:ao:s:m:"
     long_args = [
+        "user=",
+        "password=",
         "help",
         "program=",
         "any",
@@ -118,6 +121,10 @@ def main(argv=sys.argv):
     email = None
     optionalheader = None
     for option, value in opts:
+        if option in ('-u', '--user'):
+            user = value
+        if option in ('-pa', '--password'):
+            password = value
         if option in ('-h', '--help'):
             usage()
         if option in ('-p', '--program'):
@@ -141,7 +148,7 @@ def main(argv=sys.argv):
         sys.stderr.flush()
         return
 
-    prog = HttpStatus(rpc, programs, any, email, sendmail, optionalheader)
+    prog = HttpStatus(rpc, programs, any, email, sendmail, optionalheader, user, password)
     prog.runforever(test=True)
 if __name__ == '__main__':
     main()
