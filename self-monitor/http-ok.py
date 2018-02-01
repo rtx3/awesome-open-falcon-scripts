@@ -72,6 +72,7 @@ class HttpStatus:
             self.stdout.write("READY\n")
             self.stderr.flush()
             childutils.listener.ok(self.stdout)
+            self.stdout.write("READY\n")
     
     def mail(self, email, subject, msg):
         body = 'To: %s\n' % self.email
