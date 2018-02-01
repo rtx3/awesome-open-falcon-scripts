@@ -46,7 +46,7 @@ class HttpStatus:
     def httpreport(self, key, value):
         headers = {"Content-type": "application/x-www-form-urlencoded", 
                    "Accept": "text/plain"}
-        data = urllib.urlencode({'value': value})
+        data = urllib.urlencode({'value': value, 'ttl': 60})
         h = httplib.HTTPConnection('localhost:2379')
         url = '/v2/keys' + str(key)
         h.request('PUT', url.strip(), data, headers)
