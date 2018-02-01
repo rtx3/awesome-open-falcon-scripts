@@ -73,7 +73,7 @@ class HttpStatus:
                     continue
             except Exception as e:
                 self.stderr.write("ERROR: " + str(e))
-                childutils.listener.fail(self.stdout)
+                childutils.listener.ok(self.stdout)
                 continue
      
             self.stderr.flush()
