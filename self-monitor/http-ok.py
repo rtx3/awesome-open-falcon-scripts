@@ -45,8 +45,8 @@ class HttpStatus:
         while 1:
             # 使用 self.stdin, self.stdout, self.stderr 代替 sys.* 以便单元测试
             headers, payload = childutils.listener.wait(self.stdin, self.stdout)
-            self.stdout.write("HEADERS: " + str(headers))
-            self.stdout.write("PAYLOAD: {}".format(str(payload)))
+            self.stdout.write("HEADERS: {}\n".fotmat(str(headers)))
+            self.stdout.write("PAYLOAD: {}\n".format(str(payload)))
             if test:
                 self.stderr.write(str(headers) + '\n')
                 self.stderr.write(payload + '\n')
