@@ -56,13 +56,14 @@ class HttpStatus:
             headers, payload = childutils.listener.wait(self.stdin, self.stdout)
             self.stderr.write("HEADERS: {}\n".format(str(headers)))
             self.stderr.write("PAYLOAD: {}\n".format(str(payload)))
-            if not headers['eventname'].startswith('PROCESS_STATE'):
+            if not headers['eventname'].startswith('PROCESS'):
                 childutils.listener.ok(self.stdout)
                 continue
             
             self.stderr.write("EVENT: {}\n".format(headers['eventname']))
             try:
-                pheaders, pdata = childutils.eventdata(payload + '\n') 
+                pheaders, pdata = childutils.eventdata(payload + '\n')
+                self.stderr.write("PHEADERS: {}\n".format(pheaders))
                 if pheaders['processname'] in self.programs:
                     key = "{0}/{1}/{2}/HTTPSTATUS".format(KEY, self.hostname, pheaders['processname'])
                     value = headers['eventname'].split('_')[-1]
