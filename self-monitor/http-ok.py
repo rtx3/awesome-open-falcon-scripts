@@ -1,8 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# A event listener meant to be subscribed to PROCESS_STATE_CHANGE
-# events.  It will send mail when processes that are children of
-# supervisord transition unexpectedly to the EXITED state.
 import os
 import socket
 import sys
@@ -72,7 +69,7 @@ class HttpStatus:
                     self.stdout.write("REPORT STATUS:{} {} \n".format(proc['name'], str(d)))
             except Exception as e:
                 self.stderr.write("ERROR: " + str(e))
-
+            self.stdout.write("READY\n")
             self.stderr.flush()
             childutils.listener.ok(self.stdout)
     
@@ -87,7 +84,7 @@ class HttpStatus:
         self.stderr.write('Mailed:\n\n%s' % body)
         self.mailed = body
 
-        
+
 def main(argv=sys.argv):
     # 参数解析
     import getopt
