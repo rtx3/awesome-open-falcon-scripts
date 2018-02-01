@@ -67,7 +67,7 @@ class HttpStatus:
                     key = "{0}/{1}/{2}/HTTPSTATUS".format(KEY, self.hostname, pheaders['processname'])
                     value = headers['eventname'].split('_')[-1]
                     d = self.httpreport(key, value)
-                    self.stderr.write("REPORT STATUS:{} {} \n".format(pheaders['processname'], str(d)))
+                    self.stderr.write("REPORT STATUS:{} {} {} \n".format(pheaders['processname'],value, str(d)))
                 else:
                     continue
             except Exception as e:
