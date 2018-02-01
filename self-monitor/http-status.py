@@ -120,6 +120,8 @@ def main(argv=sys.argv):
     sendmail = '/usr/sbin/sendmail -t -i'
     email = None
     optionalheader = None
+    user = None
+    password = None
     for option, value in opts:
         if option in ('-u', '--user'):
             user = value
