@@ -12,7 +12,7 @@ import time
 from supervisor import childutils
 from supervisor.states import ProcessStates
 
-KEY = "/cmdb/supervisr"
+KEY = "/cmdb/supervisor"
 
 
 def usage():
@@ -33,7 +33,6 @@ class HttpStatus:
         self.stderr = sys.stderr
         self.hostname = self.__hostname()
         self.ip = socket.gethostbyname(self.hostname)
-        self.key = "{0}/{1}/{2}/STATUS".format(KEY, self.hostname, self.programs)
 
     def __hostname(self):
         return socket.gethostname()
@@ -66,33 +65,17 @@ class HttpStatus:
             specs = self.listProcesses(ProcessStates.RUNNING)
             self.stdout.write("RUNING: {}\n".format(str(specs)))
             try:
-                d = self.httpreport(self.key, int(time.time()))
-                self.stdout.write("REPORT STATUS: {} \n".format(str(d)))
+                for proc in specs:
+                    key = "{0}/{1}/{2}/STATUS".format(KEY, self.hostname, proc['name'])
+                    value = int(time.time())
+                    d = self.httpreport(key, value)
+                    self.stdout.write("REPORT STATUS:{} {} \n".format(proc['name'], str(d)))
             except Exception as e:
                 self.stderr.write("ERROR: " + str(e))
-            # 解析 payload, 这里我们只用这个 pheaders.
-            # pdata 在 PROCESS_LOG_STDERR 和 PROCESS_COMMUNICATION_STDOUT 等类型的 event 中才有
-            #pheaders, pdata = childutils.eventdata(payload + '\n')
-            # 过滤掉 expected 的 event, 仅处理 unexpected 的
-            # 当 program 的退出码为对应配置中的 exitcodes 值时, expected=1; 否则为0
-            #if int(pheaders['expected']):
-            #    childutils.listener.ok(self.stdout)
-            #    continue
-            #hostname = self.hostname
-            
-            # 构造报警内容
-            #msg = "Host: %s(%s)\nProcess: %s\nPID: %s\nEXITED unexpectedly from state: %s" % \
-            #      (hostname, ip, pheaders['processname'], pheaders['pid'], pheaders['from_state'])
-            #subject = ' %s crashed at %s' % (pheaders['processname'],
-            #                                 childutils.get_asctime())
-            #if self.optionalheader:
-            #    subject = '[' + self.optionalheader + ']' + subject
-            #self.stderr.write('unexpected exit, mailing\n')
+
             self.stderr.flush()
-            #self.mail(self.email, subject, msg)
-            # 向 stdout 写入"RESULT\nOK"，并进入下一次循环
             childutils.listener.ok(self.stdout)
-    # 发送邮件, 可以用自己的, 也可以抽出来作为一个 module 复用
+    
     def mail(self, email, subject, msg):
         body = 'To: %s\n' % self.email
         body += 'Subject: %s\n' % subject
@@ -103,6 +86,8 @@ class HttpStatus:
         m.close()
         self.stderr.write('Mailed:\n\n%s' % body)
         self.mailed = body
+
+        
 def main(argv=sys.argv):
     # 参数解析
     import getopt
