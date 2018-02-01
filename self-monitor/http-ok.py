@@ -63,7 +63,7 @@ class HttpStatus:
             self.stderr.write("RUNING: {}\n".format(str(specs)))
             try:
                 for proc in specs:
-                    if proc in programs:
+                    if proc in self.programs:
                         key = "{0}/{1}/{2}/HTTPOK".format(KEY, self.hostname, proc['name'])
                         value = int(time.time())
                         d = self.httpreport(key, value)
