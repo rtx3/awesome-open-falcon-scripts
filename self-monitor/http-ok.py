@@ -97,7 +97,7 @@ class HttpStatus:
 def main(argv=sys.argv):
     # 参数解析
     import getopt
-    short_args = "u:pa:hp:ao:s:m:"
+    short_args = "u:a:hp:ao:s:m:"
     long_args = [
         "user=",
         "password=",
@@ -121,7 +121,7 @@ def main(argv=sys.argv):
     for option, value in opts:
         if option in ('-u', '--user'):
             user = value
-        if option in ('-pa', '--password'):
+        if option in ('-a', '--password'):
             password = value
         if option in ('-h', '--help'):
             usage()
