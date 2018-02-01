@@ -29,7 +29,7 @@ class HttpStatus:
         return [x for x in self.rpc.supervisor.getAllProcessInfo()
                    if x['name'] in self.programs and
                       (state is None or x['state'] == state)]
-    def httpreport(key, value):
+    def httpreport(self, key, value):
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
         data = urllib.urlencode({'value': value})
         h = httplib.HTTPConnection('localhost:2379')
@@ -45,10 +45,6 @@ class HttpStatus:
             headers, payload = childutils.listener.wait(self.stdin, self.stdout)
             self.stdout.write("HEADERS: {}\n".format(str(headers)))
             self.stdout.write("PAYLOAD: {}\n".format(str(payload)))
-            if test:
-                self.stderr.write(str(headers) + '\n')
-                self.stderr.write(payload + '\n')
-                self.stderr.flush()
             if not headers['eventname'].startswith('TICK'):
                 childutils.listener.ok(self.stdout)
                 continue
