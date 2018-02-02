@@ -25,3 +25,5 @@ All script should push back data to open-falcon agent on port 1988.
 
 * spark: spark monirot by spark API.
 
+* self-monitor: launch open-falcon by supervisor and report by supervisor event.
+
