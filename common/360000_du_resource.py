@@ -52,11 +52,11 @@ class Resource():
 
 
 def push(data):
-    data = json.dumps(data)
+    senddata = json.dumps(data)
     headers = {"Content-type": "application/json", "Accept": "text/plain"}   
     try:
         h = httplib.HTTPConnection(PUSH_PATH)        
-        h.request('POST', '/v1/push', data, headers)
+        h.request('POST', '/v1/push', senddata, headers)
     except Exception:
         print "Pushing Failed when sending data."
         return 1

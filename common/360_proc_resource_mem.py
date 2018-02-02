@@ -78,12 +78,11 @@ class Resource():
 
 
 def push(data):
-    data = json.dumps(data)
+    senddata = json.dumps(data)
     headers = {"Content-type": "application/json", "Accept": "text/plain"}
     h = httplib.HTTPConnection(PUSH_PATH)        
-    h.request('POST', '/v1/push', data, headers)        
+    h.request('POST', '/v1/push', senddata, headers)        
     return 0
-
 
 
 def get_pid():
