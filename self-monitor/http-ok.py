@@ -67,7 +67,10 @@ class HttpStatus:
                 for proc in specs:
                     if proc['name'] in self.programs:
                         key = "{0}/{1}/{2}/HTTPOK".format(KEY, self.hostname, proc['name'])
-                        value = int(time.time())
+                        value = {}
+                        value['httpok'] = int(time.time())
+                        value['description'] = proc['description'].split(',')[-1]
+                        value['pid'] = proc['pid']
                         d = self.httpreport(key, value)
                         self.stderr.write("REPORT STATUS:{} {} \n".format(proc['name'], str(d)))
                     else:
