@@ -69,8 +69,8 @@ class HttpStatus:
 
     def start(self, spec):
         namespec = make_namespec(spec['group'], spec['name'])
-        if spec['state'] in (ProcessStates.STOPPED, ProcessStates.EXITED,
-                             ProcessStates.FATAL):
+        if spec['state'] in [ProcessStates.STOPPED, ProcessStates.EXITED,
+                             ProcessStates.FATAL]:
             self.write('%s is in STOPPED/EXITED/FATAL state, starting' % namespec)
             try:
                 self.rpc.supervisor.startProcess(namespec)
@@ -83,7 +83,7 @@ class HttpStatus:
 
     def stop(self, spec):
         namespec = make_namespec(spec['group'], spec['name'])
-        if spec['state'] in (ProcessStates.RUNNING):
+        if spec['state'] in [ProcessStates.RUNNING, ProcessStates.STARTING]:
             self.write('%s is in STOPPED state, stopping' % namespec)
             try:
                 self.rpc.supervisor.stopProcess(namespec)
@@ -129,7 +129,7 @@ class HttpStatus:
                         childutils.listener.ok(self.stdout)
                         continue
             except Exception as e:
-                self.stderr.write("ERROR: " + str(e))
+                self.stderr.write("ERROR: " + str(e) + "\n")
                 childutils.listener.fail(self.stdout)
                 continue
      
