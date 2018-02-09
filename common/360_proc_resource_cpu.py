@@ -82,7 +82,7 @@ def push(data):
     headers = {"Content-type": "application/json", "Accept": "text/plain"}
     h = httplib.HTTPConnection(PUSH_PATH)        
     h.request('POST', '/v1/push', senddata, headers)
-    print "OK " + json.dumps(data)     
+    print json.dumps(data)     
     return 0
 
 
@@ -102,13 +102,15 @@ def get_pid():
 
 if __name__ == "__main__":
     pids = get_pid()
-    print pids
+    #print pids
+    payload = []
     for item in pids:
         for pid in item:            
             d = Resource(pid=pid, tag=item[pid]).run()
             if d:
-                try:
-                    push(d)
-                except Exception:
-                    print "ERROR " + json.dumps(d)
+                payload.extend(d)
+    try:    
+        push(payload)    
+    except Exception:    
+        print "ERROR " + json.dumps(payload)
 
