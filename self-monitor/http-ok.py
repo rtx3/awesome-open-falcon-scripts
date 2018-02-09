@@ -108,7 +108,7 @@ class HttpStatus:
             try:
                 for proc in specs:
                     if proc['name'] in self.programs:
-                        onoff = self.httpget("{0}/{1}/{2}/ONOFF".format(KEY, self.hostname, proc['name']))
+                        onoff = self.httponoff("{0}/{1}/{2}/ONOFF".format(KEY, self.hostname, proc['name']))
                         if onoff == 'start':
                             self.start(proc)
                         elif onoff == 'stop':
