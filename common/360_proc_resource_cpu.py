@@ -81,7 +81,8 @@ def push(data):
     senddata = json.dumps(data)
     headers = {"Content-type": "application/json", "Accept": "text/plain"}
     h = httplib.HTTPConnection(PUSH_PATH)        
-    h.request('POST', '/v1/push', senddata, headers)        
+    h.request('POST', '/v1/push', senddata, headers)
+    print "OK " + json.dumps(data)     
     return 0
 
 
@@ -108,7 +109,6 @@ if __name__ == "__main__":
             if d:
                 try:
                     push(d)
-                    print "OK " + json.dumps(d)
                 except Exception:
                     print "ERROR " + json.dumps(d)
 
