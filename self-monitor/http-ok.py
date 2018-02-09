@@ -7,8 +7,11 @@ import urllib
 import httplib
 import time
 import base64
+import json
 from supervisor import childutils
 from supervisor.states import ProcessStates
+from supervisor.options import make_namespec
+
 
 KEY = "/cmdb/supervisor"
 #AUTH = base64.b64encode('username' + ':' + 'passwords') 
@@ -51,6 +54,44 @@ class HttpStatus:
         r = h.getresponse()
         return r.status
 
+    def httponoff(self, key):
+        headers = {"Content-type": "application/json", 
+                   "Accept": "text/plain", "Authorization": "Basic " + self.AUTH}
+        h = httplib.HTTPConnection('localhost:2379')
+        url = '/v2/keys' + str(key)
+        h.request('GET', url.strip(), headers=headers)
+        r = h.getresponse()
+        return json.loads(r.strip('\n'))['node']['value']
+
+    def write(self, msg):
+        self.stderr.write('%s\n' % msg)
+        self.stderr.flush()
+
+    def start(self, spec):
+        namespec = make_namespec(spec['group'], spec['name'])
+        if spec['state'] in (ProcessStates.STOPPED, ProcessStates.EXITED,
+                             ProcessStates.FATAL):
+            self.write('%s is in STOPPED/EXITED/FATAL state, starting' % namespec)
+            try:
+                self.rpc.supervisor.startProcess(namespec)
+            except Exception as e:
+                self.write('Failed to start process %s: %s' % (
+                    namespec, e))
+        else:
+            self.write('%s  in RUNNING state, NOT starting' % namespec)
+
+    def stop(self, spec):
+        namespec = make_namespec(spec['group'], spec['name'])
+        if spec['state'] in (ProcessStates.RUNNING):
+            self.write('%s is in STOPPED state, stopping' % namespec)
+            try:
+                self.rpc.supervisor.stopProcess(namespec)
+            except Exception as e:
+                self.write('Failed to stop process %s: %s' % (
+                    namespec, e))
+        else:
+            self.write('%s not in RUNNING state, NOT stopping' % namespec)
+
     def runforever(self, test=False):
         # 死循环, 处理完 event 不退出继续处理下一个
         while 1:
@@ -61,16 +102,23 @@ class HttpStatus:
             if not headers['eventname'].startswith('TICK'):
                 childutils.listener.ok(self.stdout)
                 continue
-            specs = self.listProcesses(ProcessStates.RUNNING)
-            self.stderr.write("RUNING: {}\n".format(str(specs)))
+            #specs = self.listProcesses(ProcessStates.RUNNING)
+            specs = self.listProcesses()
+            self.stderr.write("SPECS: {}\n".format(str(specs)))
             try:
                 for proc in specs:
                     if proc['name'] in self.programs:
+                        onoff = self.httpget("{0}/{1}/{2}/ONOFF".format(KEY, self.hostname, proc['name']))
+                        if onoff == 'start':
+                            self.start(proc)
+                        elif onoff == 'stop':
+                            self.stop(proc)
                         key = "{0}/{1}/{2}/HTTPOK".format(KEY, self.hostname, proc['name'])
                         value = {}
                         value['httpok'] = int(time.time())
                         value['description'] = proc['description'].split(',')[-1]
                         value['pid'] = proc['pid']
+                        value['state'] = proc['statename']
                         d = self.httpreport(key, value)
                         self.stderr.write("REPORT STATUS:{} {} \n".format(proc['name'], str(d)))
                     else:
