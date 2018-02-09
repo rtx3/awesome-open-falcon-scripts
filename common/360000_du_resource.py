@@ -60,7 +60,7 @@ def push(data):
     except Exception:
         print "Pushing Failed when sending data."
         return 1
-    print "Pushing finished."        
+    print json.dumps(data)        
     return 0
 
 
@@ -83,8 +83,8 @@ def get_resources():
 
 if __name__ == "__main__":
     resources = get_resources()
-    print resources
-    print "Pushing...."
+    #print resources
+    #print "Pushing...."
     d = Resource(metrics=resources).run()
     if d:
         push(d)
