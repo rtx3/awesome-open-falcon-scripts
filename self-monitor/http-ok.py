@@ -61,7 +61,7 @@ class HttpStatus:
         url = '/v2/keys' + str(key)
         h.request('GET', url.strip(), headers=headers)
         r = h.getresponse()
-        return json.loads(r.strip('\n'))['node']['value']
+        return json.loads(r.read().strip('\n'))['node']['value']
 
     def write(self, msg):
         self.stderr.write('%s\n' % msg)
