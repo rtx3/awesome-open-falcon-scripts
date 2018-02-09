@@ -74,6 +74,7 @@ class HttpStatus:
             self.write('%s is in STOPPED/EXITED/FATAL state, starting' % namespec)
             try:
                 self.rpc.supervisor.startProcess(namespec)
+                self.write('starting %s' % namespec)
             except Exception as e:
                 self.write('Failed to start process %s: %s' % (
                     namespec, e))
@@ -86,6 +87,7 @@ class HttpStatus:
             self.write('%s is in STOPPED state, stopping' % namespec)
             try:
                 self.rpc.supervisor.stopProcess(namespec)
+                self.write('stopping %s' % namespec)
             except Exception as e:
                 self.write('Failed to stop process %s: %s' % (
                     namespec, e))
@@ -113,6 +115,8 @@ class HttpStatus:
                             self.start(proc)
                         elif onoff == 'stop':
                             self.stop(proc)
+                        else:
+                            self.write("onoff invaild, not start or not stop.")
                         key = "{0}/{1}/{2}/HTTPOK".format(KEY, self.hostname, proc['name'])
                         value = {}
                         value['httpok'] = int(time.time())
