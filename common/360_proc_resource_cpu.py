@@ -106,5 +106,9 @@ if __name__ == "__main__":
         for pid in item:            
             d = Resource(pid=pid, tag=item[pid]).run()
             if d:
-                push(d)
+                try:
+                    push(d)
+                    print "OK " + json.dumps(d)
+                except Exception:
+                    print "ERROR " + json.dumps(d)
 
