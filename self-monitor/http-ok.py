@@ -172,7 +172,7 @@ def main(argv=sys.argv):
     programs = []
     any = False
     sendmail = '/usr/sbin/sendmail -t -i'
-    email = None
+    etcd = None
     optionalheader = None
     for option, value in opts:
         if option in ('-u', '--user'):
