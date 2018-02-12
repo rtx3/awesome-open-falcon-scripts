@@ -22,11 +22,12 @@ def usage():
 
 
 class HttpStatus:
-    def __init__(self, rpc, programs, any, email, sendmail, optionalheader, etcduser, etcdpassword):
+    def __init__(self, rpc, programs, any, etcd, sendmail, optionalheader, etcduser, etcdpassword):
         self.programs = programs
         self.any = any
         self.rpc = rpc
-        self.email = email
+        self.email = etcd
+        self.etcd = etcd
         self.sendmail = sendmail
         self.optionalheader = optionalheader
         self.stdin = sys.stdin
@@ -48,7 +49,7 @@ class HttpStatus:
         headers = {"Content-type": "application/x-www-form-urlencoded", 
                    "Accept": "text/plain", "Authorization": "Basic " + self.AUTH}
         data = urllib.urlencode({'value': value})
-        h = httplib.HTTPConnection('localhost:2379')
+        h = httplib.HTTPConnection(self.etcd)
         url = '/v2/keys' + str(key)
         h.request('PUT', url.strip(), data, headers)
         r = h.getresponse()
@@ -84,7 +85,7 @@ class HttpStatus:
     def stop(self, spec):
         namespec = make_namespec(spec['group'], spec['name'])
         if spec['state'] in [ProcessStates.RUNNING, ProcessStates.STARTING]:
-            self.write('%s is in STOPPED state, stopping' % namespec)
+            self.write('%s is in RUNNING/STARTING state, stopping' % namespec)
             try:
                 self.rpc.supervisor.stopProcess(namespec)
                 self.write('stopping %s' % namespec)
@@ -161,7 +162,7 @@ def main(argv=sys.argv):
         "any",
         "optionalheader="
         "sendmail_program=",
-        "email=",
+        "etcd=",
     ]
     arguments = argv[1:]
     try:
@@ -186,8 +187,8 @@ def main(argv=sys.argv):
             any = False
         if option in ('-s', '--sendmail_program'):
             sendmail = value
-        if option in ('-m', '--email'):
-            email = value
+        if option in ('-m', '--etcd'):
+            etcd = value
         if option in ('-o', '--optionalheader'):
             optionalheader = value
     
@@ -201,7 +202,7 @@ def main(argv=sys.argv):
         sys.stderr.flush()
         return
 
-    prog = HttpStatus(rpc, programs, any, email, sendmail, optionalheader, user, password)
+    prog = HttpStatus(rpc, programs, any, etcd, sendmail, optionalheader, user, password)
     prog.runforever(test=True)
 if __name__ == '__main__':
     main()
@@ -222,9 +223,7 @@ Options:
       (e.g. "/usr/sbin/sendmail -t -i").  Must be a command which accepts
       header and message data on stdin and sends mail.  Default is
       "/usr/sbin/sendmail -t -i".
--m -- specify an email address.  The script will send mail to this
-      address when crashmail detects a process crash.  If no email
-      address is specified, email will not be sent.
+-m -- specify etcd address by IP:PORT
 The -p option may be specified more than once, allowing for
 specification of multiple processes.  Specifying -a overrides any
 selection of -p.
