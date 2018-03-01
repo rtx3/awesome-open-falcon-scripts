@@ -6,15 +6,13 @@ import sys
 import urllib
 import httplib
 import time
-import base64
-import json
+import base64 
 from supervisor import childutils
 from supervisor.states import ProcessStates
-from supervisor.options import make_namespec
 
-
-KEY = "/cmdb/host"
+KEY = "/cmdb/supervisor"
 #AUTH = base64.b64encode('username' + ':' + 'passwords') 
+
 
 def usage():
     print doc
@@ -26,7 +24,6 @@ class HttpStatus:
         self.programs = programs
         self.any = any
         self.rpc = rpc
-        self.email = etcd
         self.etcd = etcd
         self.sendmail = sendmail
         self.optionalheader = optionalheader
@@ -55,50 +52,6 @@ class HttpStatus:
         r = h.getresponse()
         return r.status
 
-    def httponoff(self, key):
-        headers = {"Content-type": "application/json", 
-                   "Accept": "text/plain", "Authorization": "Basic " + self.AUTH}
-        h = httplib.HTTPConnection(self.etcd)
-        url = '/v2/keys' + str(key)
-        h.request('GET', url.strip(), headers=headers)
-        r = h.getresponse()
-        try:
-            ret = json.loads(r.read().strip('\n'))['node']['value']
-        except:
-            return None
-        return ret
-
-    def write(self, msg):
-        self.stderr.write('%s\n' % msg)
-        self.stderr.flush()
-
-    def start(self, spec):
-        namespec = make_namespec(spec['group'], spec['name'])
-        if spec['state'] in [ProcessStates.STOPPED, ProcessStates.EXITED,
-                             ProcessStates.FATAL]:
-            self.write('%s is in STOPPED/EXITED/FATAL state, starting' % namespec)
-            try:
-                self.rpc.supervisor.startProcess(namespec)
-                self.write('starting %s' % namespec)
-            except Exception as e:
-                self.write('Failed to start process %s: %s' % (
-                    namespec, e))
-        else:
-            self.write('%s  in RUNNING state, NOT starting' % namespec)
-
-    def stop(self, spec):
-        namespec = make_namespec(spec['group'], spec['name'])
-        if spec['state'] in [ProcessStates.RUNNING, ProcessStates.STARTING]:
-            self.write('%s is in RUNNING/STARTING state, stopping' % namespec)
-            try:
-                self.rpc.supervisor.stopProcess(namespec)
-                self.write('stopping %s' % namespec)
-            except Exception as e:
-                self.write('Failed to stop process %s: %s' % (
-                    namespec, e))
-        else:
-            self.write('%s not in RUNNING state, NOT stopping' % namespec)
-
     def runforever(self, test=False):
         # 死循环, 处理完 event 不退出继续处理下一个
         while 1:
@@ -106,36 +59,25 @@ class HttpStatus:
             headers, payload = childutils.listener.wait(self.stdin, self.stdout)
             self.stderr.write("HEADERS: {}\n".format(str(headers)))
             self.stderr.write("PAYLOAD: {}\n".format(str(payload)))
-            if not headers['eventname'].startswith('TICK'):
+            if not headers['eventname'].startswith('PROCESS'):
                 childutils.listener.ok(self.stdout)
                 continue
-            #specs = self.listProcesses(ProcessStates.RUNNING)
-            specs = self.listProcesses()
-            self.stderr.write("SPECS: {}\n".format(str(specs)))
+            
+            self.stderr.write("EVENT: {}\n".format(headers['eventname']))
             try:
-                for proc in specs:
-                    if proc['name'] in self.programs:
-                        onoff = self.httponoff("{0}/{1}/{2}/ONOFF".format(KEY, self.hostname, proc['name']))
-                        if onoff == 'start':
-                            self.start(proc)
-                        elif onoff == 'stop':
-                            self.stop(proc)
-                        else:
-                            self.write("onoff invaild, not start or not stop.")
-                        key = "{0}/{1}/{2}/HTTPOK".format(KEY, self.hostname, proc['name'])
-                        value = {}
-                        value['httpok'] = int(time.time())
-                        value['description'] = proc['description'].split(',')[-1]
-                        value['pid'] = proc['pid']
-                        value['state'] = proc['statename']
-                        d = self.httpreport(key, value)
-                        self.stderr.write("REPORT STATUS:{} {} \n".format(proc['name'], str(d)))
-                    else:
-                        childutils.listener.ok(self.stdout)
-                        continue
+                pheaders, pdata = childutils.eventdata(payload + '\n')
+                self.stderr.write("PHEADERS: {}\n".format(pheaders))
+                if pheaders['processname'] in self.programs:
+                    key = "{0}/{1}/{2}/HTTPSTATUS".format(KEY, self.hostname, pheaders['processname'])
+                    value = headers['eventname'].split('_')[-1]
+                    d = self.httpreport(key, value)
+                    self.stderr.write("REPORT STATUS:{} {} {} \n".format(pheaders['processname'],value, str(d)))
+                else:
+                    childutils.listener.ok(self.stdout)
+                    continue
             except Exception as e:
-                self.stderr.write("ERROR: " + str(e) + "\n")
-                childutils.listener.fail(self.stdout)
+                self.stderr.write("ERROR: " + str(e))
+                childutils.listener.ok(self.stdout)
                 continue
      
             self.stderr.flush()
@@ -178,6 +120,8 @@ def main(argv=sys.argv):
     sendmail = '/usr/sbin/sendmail -t -i'
     etcd = None
     optionalheader = None
+    user = None
+    password = None
     for option, value in opts:
         if option in ('-u', '--user'):
             user = value
@@ -187,8 +131,6 @@ def main(argv=sys.argv):
             usage()
         if option in ('-p', '--program'):
             programs.append(value)
-        if option in ('-a', '--any'):
-            any = False
         if option in ('-s', '--sendmail_program'):
             sendmail = value
         if option in ('-m', '--etcd'):
@@ -212,8 +154,8 @@ if __name__ == '__main__':
     main()
 # Usage
 doc = """\
-http-ok.py [-p processname] [-a] [-o string] [-m mail_address]
-             [-s sendmail] 
+http-status.py [-p processname] [-a] [-o string] [-m mail_address]
+             [-s sendmail] URL
 Options:
 -p -- specify a supervisor process_name.  Send mail when this process
       transitions to the EXITED state unexpectedly. If this process is
@@ -227,10 +169,12 @@ Options:
       (e.g. "/usr/sbin/sendmail -t -i").  Must be a command which accepts
       header and message data on stdin and sends mail.  Default is
       "/usr/sbin/sendmail -t -i".
--m -- specify etcd address by IP:PORT
+-m -- specify an email address.  The script will send mail to this
+      address when crashmail detects a process crash.  If no email
+      address is specified, email will not be sent.
 The -p option may be specified more than once, allowing for
 specification of multiple processes.  Specifying -a overrides any
 selection of -p.
 A sample invocation:
-http-ok.py -p program1 -p group1:program2 -m dev@example.com
+http-status.py -p program1 -p group1:program2 -m dev@example.com
 """

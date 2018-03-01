@@ -215,7 +215,7 @@ if ! [[ $MESSAGE_ENABLED -eq 0 ]]; then
 ts=`date +%s`;
 servername=`uname -a | awk '{ name = $2 } END { print name }'`;
 user=`whoami`
-curl -X POST -d "[{\"metric\": \"ip-logined\", \"endpoint\": $servername, \"timestamp\": $ts,\"step\": 60,\"value\": $FOUND,\"counterType\": \"GAUGE\",\"tags\": \"user=$user,ip=$IP\"}]" http://127.0.0.1:1988/v1/push
+#curl -X POST -d "[{\"metric\": \"ip-logined\", \"endpoint\": $servername, \"timestamp\": $ts,\"step\": 60,\"value\": $FOUND,\"counterType\": \"GAUGE\",\"tags\": \"user=$user,ip=$IP\"}]" http://127.0.0.1:1988/v1/push
 
 fi
 
