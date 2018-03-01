@@ -7,12 +7,12 @@ Srv_port = 18081
 
 #smtp服务器相关配置
 #发件人
-MailFrom = "wx@rtx3.com"
+MailFrom = "test@test.com"
 #smtp服务器地址
 StmpSrv="smtp.exmail.qq.com"
 #smtp服务使用的用户名以及密码
-MailUser="wx@rtx3.com"
-MailUserPasswd="Qwer123!@"
+MailUser="test@test.com"
+MailUserPasswd="test"
 #Use tls
 Usessl = True
 Sslport = 465
