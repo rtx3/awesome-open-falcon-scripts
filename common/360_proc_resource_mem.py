@@ -67,7 +67,7 @@ class Resource():
                 t['counterType'] = self.resources_d[resource][1]
                 t['metric'] = resource
                 t['value'] = self.resources_d[resource][0]()
-                t['tags'] = "pid=%s,pro_cmd=%s" % (self.pid, self.tag)
+                t['tags'] = "pro_cmd=%s" % ( self.tag)
 
                 output.append(t)
 
@@ -87,7 +87,7 @@ def push(data):
 
 
 def get_pid():
-    cmd = "ps aux | awk '{print $2, $4, $11}' | sort -k2rn | head -n 5"
+    cmd = "ps aux | awk '{print $2, $4, $11$12}' | sort -k2rn | head -n 5"
     ret = []
     for item in os.popen(cmd).readlines():
         pid = {}
