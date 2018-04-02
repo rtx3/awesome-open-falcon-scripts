@@ -67,7 +67,7 @@ class Resource():
                 t['counterType'] = self.resources_d[resource][1]
                 t['metric'] = resource
                 t['value'] = self.resources_d[resource][0]()
-                t['tags'] = "pro_cmd=%s" % ( self.tag)
+                t['tags'] = "project=self-monitor,module=cpu_resource,pro_cmd=%s" % ( self.tag)
 
                 output.append(t)
 
